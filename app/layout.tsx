@@ -3,7 +3,7 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "Agentis",
-  description: "Agentis platform frontend",
+  description: "Civic intelligence platform",
 };
 
 export default function RootLayout({

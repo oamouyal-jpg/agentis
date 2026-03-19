@@ -1,0 +1,6 @@
+node_modules
+.next
+Backend/node_modules
+Backend/data/store.json
+Backend/.env
+.env
