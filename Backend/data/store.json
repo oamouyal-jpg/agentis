@@ -35,6 +35,66 @@
       "text": "should pornhub be legal in Australia again",
       "clustered": true,
       "clusterId": "cluster-pornhub-legal-australia"
+    },
+    {
+      "id": 7,
+      "text": "how come porn is not allowed in Australia anymore",
+      "clustered": true,
+      "clusterId": "cluster-pornhub-legal-australia"
+    },
+    {
+      "id": 8,
+      "text": "what happened in Australia lately you cant even watch porn now?",
+      "clustered": true,
+      "clusterId": "cluster-pornhub-legal-australia"
+    },
+    {
+      "id": 9,
+      "text": "howcome we cant  watch porn in Australia any more",
+      "clustered": true,
+      "clusterId": "cluster-pornhub-legal-australia"
+    },
+    {
+      "id": 10,
+      "text": "do we need an id to watch porn in Australia now",
+      "clustered": true,
+      "clusterId": "cluster-pornhub-legal-australia"
+    },
+    {
+      "id": 11,
+      "text": "rent is crushing families",
+      "clustered": true,
+      "clusterId": "cluster-council-intervene-housing"
+    },
+    {
+      "id": 12,
+      "text": "people cannot afford stable housing",
+      "clustered": true,
+      "clusterId": "cluster-council-intervene-housing"
+    },
+    {
+      "id": 13,
+      "text": "landlords keep pushing prices higher",
+      "clustered": true,
+      "clusterId": "cluster-council-intervene-housing"
+    },
+    {
+      "id": 14,
+      "text": "housing costs are destroying security",
+      "clustered": true,
+      "clusterId": "cluster-council-intervene-housing"
+    },
+    {
+      "id": 15,
+      "text": "the cost of living in this town is crazy",
+      "clustered": true,
+      "clusterId": "cluster-1"
+    },
+    {
+      "id": 16,
+      "text": "what can we do to reduce the price of accommodation",
+      "clustered": true,
+      "clusterId": "cluster-housing-high-young"
     }
   ],
   "questions": [
@@ -50,30 +110,12 @@
         "Implementing affordability measures may increase taxes or reduce investment in housing development.",
         "Rent controls or subsidies could discourage landlords from maintaining or improving rental properties."
       ],
-      "votesYes": 1,
-      "votesNo": 0,
-      "clusterId": "cluster-housing-high-young",
-      "sourceSubmissionIds": [
-        1
-      ]
-    },
-    {
-      "id": 2,
-      "title": "Should the city implement measures to reduce rent prices for young couples?",
-      "description": "This question addresses concerns about the affordability of rent for young couples in the community.",
-      "argumentsFor": [
-        "Lower rent would make housing more accessible for young couples starting their lives together.",
-        "Reducing rent can help retain young residents and support local economic growth."
-      ],
-      "argumentsAgainst": [
-        "Rent control measures could discourage property investment and reduce housing availability.",
-        "Intervening in rent prices might lead to decreased maintenance and quality of rental properties."
-      ],
-      "votesYes": 1,
+      "votesYes": 3,
       "votesNo": 0,
       "clusterId": "cluster-housing-high-young",
       "sourceSubmissionIds": [
         1,
+        16,
         2
       ]
     },
@@ -93,46 +135,11 @@
       "votesNo": 1,
       "clusterId": "cluster-council-intervene-housing",
       "sourceSubmissionIds": [
-        3
-      ]
-    },
-    {
-      "id": 4,
-      "title": "Should the city implement measures to reduce rent prices for young couples?",
-      "description": "This question addresses concerns about the affordability of rental housing for young couples in the community.",
-      "argumentsFor": [
-        "Lower rent prices would make housing more accessible for young couples starting their lives together.",
-        "Reducing rent could help retain young residents and support local economic growth."
-      ],
-      "argumentsAgainst": [
-        "Rent control measures might discourage landlords from maintaining or investing in rental properties.",
-        "Intervening in rent prices could reduce the overall supply of rental housing, leading to shortages."
-      ],
-      "votesYes": 0,
-      "votesNo": 0,
-      "clusterId": "cluster-housing-high-young",
-      "sourceSubmissionIds": [
-        1,
-        2
-      ]
-    },
-    {
-      "id": 5,
-      "title": "Should the city council regulate rent prices to make housing more affordable?",
-      "description": "This question addresses whether the city council should take action to control rent costs to improve housing affordability.",
-      "argumentsFor": [
-        "Regulating rent can prevent excessive increases and protect tenants from displacement.",
-        "Affordable housing supports community stability and economic diversity."
-      ],
-      "argumentsAgainst": [
-        "Rent control may discourage landlords from maintaining or investing in properties.",
-        "Market-driven rent prices can encourage housing development and supply growth."
-      ],
-      "votesYes": 0,
-      "votesNo": 0,
-      "clusterId": "cluster-council-intervene-housing",
-      "sourceSubmissionIds": [
-        3
+        3,
+        11,
+        12,
+        13,
+        14
       ]
     },
     {
@@ -174,83 +181,6 @@
       ]
     },
     {
-      "id": 8,
-      "title": "Should the city implement measures to reduce rent prices for young couples?",
-      "description": "This question addresses concerns about the affordability of rent for young couples in the community.",
-      "argumentsFor": [
-        "Lower rent would make housing more accessible for young couples starting their lives together.",
-        "Reducing rent costs could help retain young residents and support local economic growth."
-      ],
-      "argumentsAgainst": [
-        "Rent control measures might discourage landlords from maintaining or investing in rental properties.",
-        "Intervening in rent prices could reduce the overall supply of available housing units."
-      ],
-      "votesYes": 0,
-      "votesNo": 0,
-      "clusterId": "cluster-housing-high-young",
-      "sourceSubmissionIds": [
-        1,
-        2
-      ]
-    },
-    {
-      "id": 9,
-      "title": "Should the city council regulate rent prices to make housing more affordable?",
-      "description": "This question addresses whether local government should take action to control rental costs to improve housing affordability.",
-      "argumentsFor": [
-        "Regulating rent can prevent excessive increases and protect tenants from displacement.",
-        "Affordable housing supports community stability and economic diversity."
-      ],
-      "argumentsAgainst": [
-        "Rent control may discourage landlords from maintaining or investing in properties.",
-        "Market-driven prices can encourage more housing development and availability."
-      ],
-      "votesYes": 0,
-      "votesNo": 0,
-      "clusterId": "cluster-council-intervene-housing",
-      "sourceSubmissionIds": [
-        3
-      ]
-    },
-    {
-      "id": 10,
-      "title": "Should the government take action to address rising fuel prices caused by the conflict in Iran?",
-      "description": "This question considers whether government intervention is necessary to manage fuel price increases linked to the war in Iran.",
-      "argumentsFor": [
-        "Government action could help stabilize fuel prices and protect consumers from economic hardship.",
-        "Intervention may reduce the broader economic impact of the conflict on local communities."
-      ],
-      "argumentsAgainst": [
-        "Market forces should determine fuel prices without government interference.",
-        "Intervening could lead to unintended economic consequences or increased government spending."
-      ],
-      "votesYes": 0,
-      "votesNo": 0,
-      "clusterId": "cluster-war-iran-causing",
-      "sourceSubmissionIds": [
-        4
-      ]
-    },
-    {
-      "id": 11,
-      "title": "Should Israel continue military operations until the current regime is overthrown?",
-      "description": "This question addresses whether Israel should persist with its military actions aimed at regime change.",
-      "argumentsFor": [
-        "Continuing the war could lead to the removal of a hostile regime, potentially increasing regional security.",
-        "Sustained military pressure may deter future aggression and protect citizens from ongoing threats."
-      ],
-      "argumentsAgainst": [
-        "Prolonged conflict risks significant civilian casualties and humanitarian crises.",
-        "Extended warfare may destabilize the region further and hinder prospects for peaceful resolution."
-      ],
-      "votesYes": 0,
-      "votesNo": 0,
-      "clusterId": "cluster-israel-continue-war",
-      "sourceSubmissionIds": [
-        5
-      ]
-    },
-    {
       "id": 12,
       "title": "Should Pornhub be legally allowed to operate and provide adult content in Australia?",
       "description": "This question addresses whether Pornhub should be permitted to legally offer its adult content services within Australia.",
@@ -266,10 +196,31 @@
       "votesNo": 0,
       "clusterId": "cluster-pornhub-legal-australia",
       "sourceSubmissionIds": [
-        6
+        6,
+        9,
+        10
+      ]
+    },
+    {
+      "id": 18,
+      "title": "Should the city implement measures to reduce the cost of living for residents?",
+      "description": "This question addresses concerns about the high cost of living affecting residents' financial well-being.",
+      "argumentsFor": [
+        "Reducing the cost of living can improve quality of life and make the city more affordable for all residents.",
+        "Lower living costs can attract and retain a diverse workforce, boosting the local economy."
+      ],
+      "argumentsAgainst": [
+        "Implementing cost reduction measures may require increased taxes or reallocation of city funds.",
+        "Some measures could discourage business investment or lead to reduced services if budgets are constrained."
+      ],
+      "votesYes": 0,
+      "votesNo": 0,
+      "clusterId": "cluster-1",
+      "sourceSubmissionIds": [
+        15
       ]
     }
   ],
-  "nextSubmissionId": 7,
-  "nextQuestionId": 13
+  "nextSubmissionId": 17,
+  "nextQuestionId": 19
 }

@@ -13,7 +13,7 @@ console.log("OPENAI KEY LOADED:", !!process.env.OPENAI_API_KEY);
 
 import adminRoutes from "./modules/ai/admin.routes";
 import { dataStore } from "./store/store";
-
+import { generateInsightNarrative } from "./services/generateInsightNarrative";
 const app = express();
 const PORT = 4000;
 
@@ -35,9 +35,13 @@ app.get("/submissions", (_req: Request, res: Response) => {
   res.json(dataStore.getSubmissions());
 });
 
-app.get("/insights", (_req: Request, res: Response) => {
+app.get("/insights", async (_req: Request, res: Response) => {
   try {
     const questions = dataStore.getQuestions();
+    const submissions =
+      typeof dataStore.getSubmissions === "function"
+        ? dataStore.getSubmissions()
+        : [];
 
     const enriched = questions.map((q) => {
       const totalVotes = q.votesYes + q.votesNo;
@@ -92,6 +96,7 @@ app.get("/insights", (_req: Request, res: Response) => {
       string,
       {
         clusterId: string;
+        title: string;
         questionCount: number;
         totalVotes: number;
         titles: string[];
@@ -99,55 +104,89 @@ app.get("/insights", (_req: Request, res: Response) => {
     >();
 
     for (const q of enriched) {
-      const existing = clusterMap.get(q.clusterId);
+      const clusterId = q.clusterId || "unclustered";
+      const clusterTitle =
+        q.clusterTitle || q.clusterLabel || q.cluster || "Unclustered";
 
-      if (existing) {
-        existing.questionCount += 1;
-        existing.totalVotes += q.totalVotes;
-        existing.titles.push(q.title);
-      } else {
-        clusterMap.set(q.clusterId, {
-          clusterId: q.clusterId,
-          questionCount: 1,
-          totalVotes: q.totalVotes,
-          titles: [q.title],
+      if (!clusterMap.has(clusterId)) {
+        clusterMap.set(clusterId, {
+          clusterId,
+          title: clusterTitle,
+          questionCount: 0,
+          totalVotes: 0,
+          titles: [],
         });
       }
+
+      const entry = clusterMap.get(clusterId)!;
+      entry.questionCount += 1;
+      entry.totalVotes += q.totalVotes;
+      entry.titles.push(q.title);
     }
 
-    const clusterSummary = [...clusterMap.values()].sort(
-      (a, b) => b.totalVotes - a.totalVotes
-    );
+    const clusterSummary = [...clusterMap.values()]
+      .sort((a, b) => b.totalVotes - a.totalVotes)
+      .map((cluster) => ({
+        clusterId: cluster.clusterId,
+        title: cluster.title,
+        questionCount: cluster.questionCount,
+        totalVotes: cluster.totalVotes,
+        titles: cluster.titles,
+      }));
 
-    const overview = enriched.reduce(
-      (acc, q) => {
-        acc.totalQuestions += 1;
-        acc.totalVotes += q.totalVotes;
-        acc.totalYes += q.votesYes;
-        acc.totalNo += q.votesNo;
-        return acc;
-      },
-      {
-        totalQuestions: 0,
-        totalVotes: 0,
-        totalYes: 0,
-        totalNo: 0,
-      }
-    );
+    const overview = {
+      totalQuestions: questions.length,
+      totalVotes: enriched.reduce((sum, q) => sum + q.totalVotes, 0),
+      totalSubmissions: submissions.length,
+    };
+
+    const narrative = await generateInsightNarrative({
+      overview,
+      topQuestions: topQuestions.map((q) => ({
+        id: q.id,
+        title: q.title,
+        description: q.description,
+        yesVotes: q.votesYes,
+        noVotes: q.votesNo,
+        clusterId: q.clusterId,
+      })),
+      mostControversial: mostControversial.map((q) => ({
+        id: q.id,
+        title: q.title,
+        description: q.description,
+        yesVotes: q.votesYes,
+        noVotes: q.votesNo,
+        clusterId: q.clusterId,
+      })),
+      strongestConsensus: strongestConsensus.map((q) => ({
+        id: q.id,
+        title: q.title,
+        description: q.description,
+        yesVotes: q.votesYes,
+        noVotes: q.votesNo,
+        clusterId: q.clusterId,
+      })),
+      clusterSummary: clusterSummary.map((c) => ({
+        clusterId: c.clusterId,
+        title: c.title,
+        questionCount: c.questionCount,
+        totalVotes: c.totalVotes,
+      })),
+    });
 
     res.json({
-      ok: true,
       overview,
       topQuestions,
       mostControversial,
       strongestConsensus,
       clusterSummary,
+      narrative,
     });
   } catch (error) {
+    console.error("Insights route failed:", error);
     res.status(500).json({
-      ok: false,
       error: "Failed to generate insights",
-      details: String(error),
+      details: error instanceof Error ? error.message : String(error),
     });
   }
 });

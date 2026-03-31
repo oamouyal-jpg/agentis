@@ -144,6 +144,81 @@ class DataStore {
     return this.questions;
   }
 
+  getQuestionById(id: number): Question | undefined {
+    return this.questions.find((q) => q.id === id);
+  }
+
+  getQuestionByClusterId(clusterId: string): Question | undefined {
+    return this.questions.find((q) => q.clusterId === clusterId);
+  }
+
+  updateQuestion(
+    questionId: number,
+    updates: Partial<Omit<Question, "id">>
+  ): Question | undefined {
+    const question = this.getQuestionById(questionId);
+
+    if (!question) {
+      return undefined;
+    }
+
+    Object.assign(question, updates);
+    this.save();
+    return question;
+  }
+
+  deleteQuestion(questionId: number): boolean {
+    const before = this.questions.length;
+    this.questions = this.questions.filter((q) => q.id !== questionId);
+    const changed = this.questions.length !== before;
+
+    if (changed) {
+      this.save();
+    }
+
+    return changed;
+  }
+
+  addSubmissionIdsToQuestion(
+    questionId: number,
+    submissionIds: number[]
+  ): Question | undefined {
+    const question = this.getQuestionById(questionId);
+
+    if (!question) {
+      return undefined;
+    }
+
+    const merged = new Set<number>([
+      ...question.sourceSubmissionIds,
+      ...submissionIds,
+    ]);
+
+    question.sourceSubmissionIds = [...merged];
+    this.save();
+    return question;
+  }
+
+  addSubmissionIdsToQuestionByClusterId(
+    clusterId: string,
+    submissionIds: number[]
+  ): Question | undefined {
+    const question = this.getQuestionByClusterId(clusterId);
+
+    if (!question) {
+      return undefined;
+    }
+
+    const merged = new Set<number>([
+      ...question.sourceSubmissionIds,
+      ...submissionIds,
+    ]);
+
+    question.sourceSubmissionIds = [...merged];
+    this.save();
+    return question;
+  }
+
   clearQuestions(): void {
     this.questions = [];
     this.nextQuestionId = 1;
