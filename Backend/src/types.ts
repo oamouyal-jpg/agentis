@@ -5,6 +5,13 @@ export type Submission = {
   clusterId?: string;
 };
 
+export type Cluster = {
+  id: string;
+  title: string;
+  summary: string;
+  submissionIds: number[];
+};
+
 export type Question = {
   id: number;
   title: string;
@@ -17,16 +24,12 @@ export type Question = {
   sourceSubmissionIds: number[];
 };
 
-export type Cluster = {
-  clusterId: string;
-  title: string;
-  summary: string;
-  submissionIds: number[];
-};
-
 export type Store = {
   submissions: Submission[];
+  clusters: Cluster[];
   questions: Question[];
-  nextSubmissionId: number;
-  nextQuestionId: number;
+  counters: {
+    submissionId: number;
+    questionId: number;
+  };
 };
