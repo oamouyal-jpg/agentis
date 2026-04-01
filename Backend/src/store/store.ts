@@ -18,6 +18,7 @@ export type Question = {
   votesNo: number;
   clusterId: string;
   sourceSubmissionIds: number[];
+  createdAt?: number;
 };
 
 type PersistedData = {
@@ -133,6 +134,7 @@ class DataStore {
       votesNo: 0,
       clusterId: input.clusterId,
       sourceSubmissionIds: input.sourceSubmissionIds,
+      createdAt: input.createdAt ?? Date.now(),
     };
 
     this.questions.push(question);

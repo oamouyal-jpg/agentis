@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { use, useEffect, useMemo, useState } from "react";
+import { API_BASE } from "../../../lib/apiBase";
 
 type Question = {
   id: number;
@@ -15,8 +16,6 @@ type Question = {
   votesNo: number;
   createdAt?: number;
 };
-
-const API_BASE = "http://localhost:4000";
 
 export default function QuestionDetailPage({
   params,

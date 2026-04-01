@@ -1,24 +1,39 @@
 import dotenv from "dotenv";
+import * as fs from "fs";
 import path from "path";
 
-dotenv.config({
-  path: path.resolve(__dirname, "../.env"),
-});
+const envPath = path.resolve(__dirname, "../.env");
+if (fs.existsSync(envPath)) {
+  dotenv.config({ path: envPath });
+} else {
+  dotenv.config();
+}
 
 import express, { Request, Response } from "express";
 import cors from "cors";
 import { aiClusterSubmissions } from "./services/aiClusterSubmissions";
 
-console.log("ENV PATH:", path.resolve(__dirname, "../.env"));
-console.log("OPENAI KEY LOADED:", !!process.env.OPENAI_API_KEY);
-
 import adminRoutes from "./modules/ai/admin.routes";
 import { dataStore } from "./store/store";
 import { generateInsightNarrative } from "./services/generateInsightNarrative";
 const app = express();
-const PORT = 4000;
+const PORT = Number(process.env.PORT) || 4000;
 
-app.use(cors());
+const allowedOrigins = (process.env.CORS_ORIGINS || "")
+  .split(",")
+  .map((s) => s.trim())
+  .filter(Boolean);
+
+app.use(
+  cors({
+    origin(origin, callback) {
+      if (!origin) return callback(null, true);
+      if (allowedOrigins.length === 0) return callback(null, true);
+      if (allowedOrigins.includes(origin)) return callback(null, true);
+      return callback(new Error(`CORS blocked for origin: ${origin}`));
+    },
+  })
+);
 app.use(express.json());
 
 app.get("/", (_req: Request, res: Response) => {
@@ -104,8 +119,9 @@ app.get("/insights", async (_req: Request, res: Response) => {
       }
     >();
 
-    const clusterId = q.clusterId || "unclustered";
-const clusterTitle = q.clusterId || "Unclustered";
+    for (const q of enriched) {
+      const clusterId = q.clusterId || "unclustered";
+      const clusterTitle = q.clusterId || "Unclustered";
 
       if (!clusterMap.has(clusterId)) {
         clusterMap.set(clusterId, {

@@ -32,7 +32,8 @@ export function generateInsights(questions: Question[]) {
       });
     }
 
-    const isRecent = now - q.createdAt < 1000 * 60 * 60 * 48;
+    const createdAt = q.createdAt ?? now;
+    const isRecent = now - createdAt < 1000 * 60 * 60 * 48;
 
     if (isRecent && totalVotes > 5) {
       insights.push({

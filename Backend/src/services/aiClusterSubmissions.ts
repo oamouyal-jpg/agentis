@@ -233,7 +233,7 @@ ${JSON.stringify(compactSubmissions, null, 2)}
 
     const unassigned = submissions
       .filter((s) => !assignedIds.has(String(s.id)))
-      .map((s) => s.id);
+      .map((s) => String(s.id));
 
     if (unassigned.length > 0) {
       cleaned.push({

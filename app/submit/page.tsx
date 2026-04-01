@@ -1,9 +1,8 @@
-﻿"use client";
+"use client";
 
 import Link from "next/link";
 import { useState } from "react";
-
-const API_BASE = "http://localhost:4000";
+import { API_BASE } from "../../lib/apiBase";
 
 export default function SubmitPage() {
   const [text, setText] = useState("");

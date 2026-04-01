@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { API_BASE } from "../../lib/apiBase";
 
 type InsightQuestion = {
   id: number;
@@ -44,8 +45,6 @@ type InsightsResponse = {
   strongestConsensus: ConsensusQuestion[];
   clusterSummary: ClusterSummary[];
 };
-
-const API_BASE = "http://localhost:4000";
 
 export default function InsightsPage() {
   const [data, setData] = useState<InsightsResponse | null>(null);
