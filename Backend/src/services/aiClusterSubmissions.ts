@@ -3,7 +3,7 @@ import OpenAI from "openai";
 type Submission = {
   id: number | string;
   text: string;
-  createdAt?: string;
+  createdAt?: number;
 };
 
 export type AICluster = {

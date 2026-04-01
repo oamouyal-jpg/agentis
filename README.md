@@ -47,11 +47,34 @@ On the **frontend** service:
 - `NEXT_PUBLIC_API_BASE_URL`: the backend base URL
   - Example: `https://agentis-backend.onrender.com`
 
+## Spaces (Phase 1)
+
+Data is scoped by **space**. Each space has its own submissions, questions, votes, and insights.
+
+- **Public space** — anyone can submit and vote (`visibility: public`).
+- **Members-only space** — submit/vote only with the **invite token** (create a `members_only` space; the API returns `inviteSecret` once). Open the app as  
+  `/s/your-slug?invite=TOKEN`  
+  or send header `X-Space-Invite: TOKEN` on API calls (the UI stores the token from the query string).
+
+**API**
+
+- `GET /spaces` — list spaces (no secrets)
+- `POST /spaces` — body: `{ name, slug, description?, visibility: "public" | "members_only" }`
+- `GET /spaces/:slug` — space metadata
+- Scoped routes (require invite for members-only):  
+  `GET/POST /spaces/:slug/questions`, `/submit`, `/vote`, `/insights`, `/admin/...`
+
+Legacy routes without a slug (`/questions`, `/submit`, `/vote`, `/insights`, `/admin`) use the **`open`** space.
+
+**Frontend**
+
+- `/` — directory of spaces + create form
+- `/s/[slug]`, `/s/[slug]/submit`, `/s/[slug]/admin`, `/s/[slug]/insights`, `/s/[slug]/questions/[id]` — space UI
+
 ## App flow
 
-1. Open the frontend and go to **Submit** to add concerns
-2. Go to **Admin** and click **Run Clustering**
-3. Return to **Home** to see generated questions
-4. Open a question and vote **Yes/No**
-5. Visit **Insights** for aggregated signal
+1. Open `/` and pick a space (or use **open**).
+2. **Submit** concerns, then **Admin → Run Clustering**.
+3. Open a question and vote **Yes/No**.
+4. **Insights** for aggregated signal in that space.
 

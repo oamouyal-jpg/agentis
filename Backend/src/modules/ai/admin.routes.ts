@@ -1,24 +1,33 @@
-import { Router } from "express";
+import { Response, Router } from "express";
 import { dataStore } from "../../store/store";
 import { aiClusterSubmissions } from "./aiClusterSubmissions";
 import { assignSubmissionsToExistingQuestions } from "./assignSubmissionsToExistingQuestions";
 import { generateQuestionFromTheme } from "./question.service";
 
-const router = Router();
+const router = Router({ mergeParams: true });
 
-router.get("/stats", (_req, res) => {
-  const questions = dataStore.getQuestions();
-  const submissions = dataStore.getSubmissions();
+function spaceId(res: Response): number {
+  const id = (res.locals as { spaceId?: number }).spaceId;
+  if (typeof id !== "number") {
+    throw new Error("Missing space context");
+  }
+  return id;
+}
+
+router.get("/stats", async (_req, res) => {
+  const sid = spaceId(res);
+  const questions = await dataStore.getQuestions(sid);
+  const submissions = await dataStore.getSubmissions(sid);
 
   const totalVotes = questions.reduce(
-    (sum, q: any) => sum + (q.votesYes || 0) + (q.votesNo || 0),
+    (sum, q) => sum + (q.votesYes || 0) + (q.votesNo || 0),
     0
   );
 
   res.json({
     totalSubmissions: submissions.length,
-    pendingSubmissions: submissions.filter((s: any) => !s.clustered).length,
-    clusteredSubmissions: submissions.filter((s: any) => s.clustered).length,
+    pendingSubmissions: submissions.filter((s) => !s.clustered).length,
+    clusteredSubmissions: submissions.filter((s) => s.clustered).length,
     totalQuestions: questions.length,
     totalVotes,
   });
@@ -26,10 +35,11 @@ router.get("/stats", (_req, res) => {
 
 router.post("/cluster", async (_req, res) => {
   try {
-    const submissions = dataStore.getSubmissions();
-    const questions = dataStore.getQuestions();
+    const sid = spaceId(res);
+    const submissions = await dataStore.getSubmissions(sid);
+    const questions = await dataStore.getQuestions(sid);
 
-    const pendingSubmissions = submissions.filter((s: any) => !s.clustered);
+    const pendingSubmissions = submissions.filter((s) => !s.clustered);
 
     if (pendingSubmissions.length === 0) {
       return res.json({
@@ -43,11 +53,11 @@ router.post("/cluster", async (_req, res) => {
     }
 
     const assignments = await assignSubmissionsToExistingQuestions(
-      pendingSubmissions.map((s: any) => ({
+      pendingSubmissions.map((s) => ({
         id: s.id,
         text: s.text,
       })),
-      questions.map((q: any) => ({
+      questions.map((q) => ({
         id: q.id,
         title: q.title,
         description: q.description,
@@ -64,17 +74,17 @@ router.post("/cluster", async (_req, res) => {
 
       const submissionId = Number(assignment.submissionId);
 
-      dataStore.markSubmissionClustered(submissionId, assignment.clusterId);
-      dataStore.addSubmissionIdsToQuestionByClusterId(assignment.clusterId, [
-        submissionId,
-      ]);
+      await dataStore.markSubmissionClustered(sid, submissionId, assignment.clusterId);
+      await dataStore.addSubmissionIdsToQuestionByClusterId(
+        sid,
+        assignment.clusterId,
+        [submissionId]
+      );
       mergedIntoExisting++;
     }
 
-    const refreshedSubmissions = dataStore.getSubmissions();
-    const unassignedSubmissions = refreshedSubmissions.filter(
-      (s: any) => !s.clustered
-    );
+    const refreshedSubmissions = await dataStore.getSubmissions(sid);
+    const unassignedSubmissions = refreshedSubmissions.filter((s) => !s.clustered);
 
     if (unassignedSubmissions.length === 0) {
       return res.json({
@@ -83,17 +93,17 @@ router.post("/cluster", async (_req, res) => {
         mergedIntoExisting,
         clustersCreated: 0,
         questionsCreated: 0,
-        totalQuestions: dataStore.getQuestions().length,
+        totalQuestions: (await dataStore.getQuestions(sid)).length,
         assignments,
       });
     }
 
     const clusters = await aiClusterSubmissions(unassignedSubmissions);
     let questionsCreated = 0;
-    const createdQuestions: any[] = [];
+    const createdQuestions: unknown[] = [];
 
     for (const cluster of clusters) {
-      const clusterSubmissions = unassignedSubmissions.filter((submission: any) =>
+      const clusterSubmissions = unassignedSubmissions.filter((submission) =>
         cluster.submissionIds.includes(submission.id)
       );
 
@@ -101,15 +111,18 @@ router.post("/cluster", async (_req, res) => {
         continue;
       }
 
-      const existingQuestion = dataStore.getQuestionByClusterId(cluster.clusterId);
+      const existingQuestion = await dataStore.getQuestionByClusterId(
+        sid,
+        cluster.clusterId
+      );
 
       if (existingQuestion) {
-        const ids = clusterSubmissions.map((s: any) => s.id);
+        const ids = clusterSubmissions.map((s) => s.id);
 
-        dataStore.addSubmissionIdsToQuestionByClusterId(cluster.clusterId, ids);
+        await dataStore.addSubmissionIdsToQuestionByClusterId(sid, cluster.clusterId, ids);
 
         for (const submission of clusterSubmissions) {
-          dataStore.markSubmissionClustered(submission.id, cluster.clusterId);
+          await dataStore.markSubmissionClustered(sid, submission.id, cluster.clusterId);
         }
 
         mergedIntoExisting += ids.length;
@@ -117,7 +130,7 @@ router.post("/cluster", async (_req, res) => {
       }
 
       const submissionTexts = clusterSubmissions
-        .map((submission: any) => submission.text || "")
+        .map((submission) => submission.text || "")
         .filter(Boolean);
 
       const generated = await generateQuestionFromTheme(
@@ -125,7 +138,7 @@ router.post("/cluster", async (_req, res) => {
         submissionTexts
       );
 
-      const createdQuestion = dataStore.addQuestion({
+      const createdQuestion = await dataStore.addQuestion(sid, {
         title:
           generated?.title?.trim() ||
           "Should more be done to address this public concern?",
@@ -148,11 +161,11 @@ router.post("/cluster", async (_req, res) => {
                 "Some may believe current systems already address the issue.",
               ],
         clusterId: cluster.clusterId,
-        sourceSubmissionIds: clusterSubmissions.map((s: any) => s.id),
+        sourceSubmissionIds: clusterSubmissions.map((s) => s.id),
       });
 
       for (const submission of clusterSubmissions) {
-        dataStore.markSubmissionClustered(submission.id, cluster.clusterId);
+        await dataStore.markSubmissionClustered(sid, submission.id, cluster.clusterId);
       }
 
       createdQuestions.push(createdQuestion);
@@ -165,7 +178,7 @@ router.post("/cluster", async (_req, res) => {
       mergedIntoExisting,
       clustersCreated: clusters.length,
       questionsCreated,
-      totalQuestions: dataStore.getQuestions().length,
+      totalQuestions: (await dataStore.getQuestions(sid)).length,
       assignments,
       clusters,
       questions: createdQuestions,
@@ -187,9 +200,10 @@ router.post("/cluster", async (_req, res) => {
   }
 });
 
-router.post("/consolidate-questions", (_req, res) => {
+router.post("/consolidate-questions", async (_req, res) => {
   try {
-    const questions = dataStore.getQuestions();
+    const sid = spaceId(res);
+    const questions = await dataStore.getQuestions(sid);
 
     if (!questions.length) {
       return res.json({
@@ -201,7 +215,7 @@ router.post("/consolidate-questions", (_req, res) => {
       });
     }
 
-    const groups = new Map<string, any[]>();
+    const groups = new Map<string, typeof questions>();
 
     for (const question of questions) {
       const key = question.clusterId || `question-${question.id}`;
@@ -255,14 +269,14 @@ router.post("/consolidate-questions", (_req, res) => {
         new Set(sorted.flatMap((q) => q.sourceSubmissionIds || []))
       );
 
-      dataStore.updateQuestion(keeper.id, {
+      await dataStore.updateQuestion(sid, keeper.id, {
         votesYes: mergedVotesYes,
         votesNo: mergedVotesNo,
         sourceSubmissionIds: mergedSubmissionIds,
       });
 
       for (const duplicate of duplicates) {
-        const deleted = dataStore.deleteQuestion(duplicate.id);
+        const deleted = await dataStore.deleteQuestion(sid, duplicate.id);
         if (deleted) {
           questionsRemoved++;
         }
@@ -283,7 +297,7 @@ router.post("/consolidate-questions", (_req, res) => {
       message: "Question consolidation completed",
       groupsFound: duplicateGroups.length,
       questionsRemoved,
-      totalQuestions: dataStore.getQuestions().length,
+      totalQuestions: (await dataStore.getQuestions(sid)).length,
       consolidated: consolidationReport,
     });
   } catch (error) {

@@ -4,53 +4,86 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { API_BASE } from "../lib/apiBase";
 
-type Question = {
+type SpaceListItem = {
   id: number;
-  title: string;
+  name: string;
+  slug: string;
   description: string;
-  argumentsFor: string[];
-  argumentsAgainst: string[];
-  clusterId: string;
-  sourceSubmissionIds: number[];
-  votesYes: number;
-  votesNo: number;
-  createdAt?: number;
+  visibility: "public" | "members_only";
+  membersOnly: boolean;
 };
 
-export default function HomePage() {
-  const [questions, setQuestions] = useState<Question[]>([]);
+export default function SpacesDirectoryPage() {
+  const [spaces, setSpaces] = useState<SpaceListItem[]>([]);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
 
+  const [name, setName] = useState("");
+  const [slug, setSlug] = useState("");
+  const [description, setDescription] = useState("");
+  const [visibility, setVisibility] = useState<"public" | "members_only">("public");
+  const [createMsg, setCreateMsg] = useState("");
+  const [creating, setCreating] = useState(false);
+
   useEffect(() => {
-    async function loadQuestions() {
+    async function load() {
       try {
         setLoading(true);
         setError("");
-
-        const res = await fetch(`${API_BASE}/questions`, {
-          cache: "no-store",
-        });
-
-        const text = await res.text();
-
-        if (!res.ok) {
-          throw new Error(`Backend returned ${res.status}: ${text}`);
-        }
-
-        const data = JSON.parse(text);
-        setQuestions(Array.isArray(data) ? data : []);
-      } catch (err) {
-        const message =
-          err instanceof Error ? err.message : "Failed to load questions";
-        setError(message);
+        const res = await fetch(`${API_BASE}/spaces`, { cache: "no-store" });
+        if (!res.ok) throw new Error(await res.text());
+        const data = await res.json();
+        setSpaces(Array.isArray(data) ? data : []);
+      } catch (e) {
+        setError(e instanceof Error ? e.message : "Failed to load spaces");
       } finally {
         setLoading(false);
       }
     }
-
-    loadQuestions();
+    load();
   }, []);
+
+  async function handleCreate(e: React.FormEvent) {
+    e.preventDefault();
+    setCreateMsg("");
+    if (!name.trim() || !slug.trim()) {
+      setCreateMsg("Name and slug are required.");
+      return;
+    }
+    try {
+      setCreating(true);
+      const res = await fetch(`${API_BASE}/spaces`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: name.trim(),
+          slug: slug.trim(),
+          description: description.trim(),
+          visibility,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || "Create failed");
+      }
+      setCreateMsg(
+        data.inviteSecret
+          ? `Space created. Save this invite link token: ${data.inviteSecret} (shown once). Share: /s/${data.space.slug}?invite=${encodeURIComponent(data.inviteSecret)}`
+          : "Space created."
+      );
+      setName("");
+      setSlug("");
+      setDescription("");
+      const listRes = await fetch(`${API_BASE}/spaces`, { cache: "no-store" });
+      if (listRes.ok) {
+        setSpaces(await listRes.json());
+      }
+    } catch (e) {
+      setCreateMsg(e instanceof Error ? e.message : "Create failed");
+    } finally {
+      setCreating(false);
+    }
+  }
 
   return (
     <main className="min-h-screen bg-slate-950 text-slate-100">
@@ -59,82 +92,20 @@ export default function HomePage() {
           <div className="text-lg font-semibold tracking-tight text-white">
             Agentis
           </div>
-
-          <nav className="flex items-center gap-3">
-            <Link
-              href="/"
-              className="rounded-xl border border-slate-700 px-4 py-2 text-sm text-slate-300 hover:bg-slate-800"
-            >
-              Home
-            </Link>
-
-            <Link
-              href="/submit"
-              className="rounded-xl border border-cyan-500/40 bg-cyan-500/10 px-4 py-2 text-sm text-cyan-300 hover:bg-cyan-500/20"
-            >
-              Submit
-            </Link>
-
-            <Link
-              href="/admin"
-              className="rounded-xl border border-slate-700 px-4 py-2 text-sm text-slate-300 hover:bg-slate-800"
-            >
-              Admin
-            </Link>
-
-            <Link
-              href="/insights"
-              className="rounded-xl border border-slate-700 px-4 py-2 text-sm text-slate-300 hover:bg-slate-800"
-            >
-              Insights
-            </Link>
-          </nav>
+          <p className="text-sm text-slate-500">Spaces</p>
         </div>
       </header>
 
       <section className="mx-auto max-w-6xl px-6 py-12">
         <div className="mb-10 rounded-3xl border border-slate-800 bg-slate-900/70 p-8 shadow-2xl">
-          <div className="mb-4 inline-flex rounded-full border border-cyan-500/30 bg-cyan-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-cyan-300">
-            Civic Intelligence Platform
-          </div>
-
-          <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">
-            Agentis
+          <h1 className="text-3xl font-bold tracking-tight text-white sm:text-4xl">
+            Choose a space
           </h1>
-
-          <p className="mt-4 max-w-3xl text-base leading-7 text-slate-300 sm:text-lg">
-            Structured civic questions generated from public concerns, clustered
-            into clearer signals people can vote on.
-          </p>
-
-          <div className="mt-8 grid gap-4 sm:grid-cols-3">
-            <div className="rounded-2xl border border-slate-800 bg-slate-950/60 p-4">
-              <p className="text-sm text-slate-400">Active Questions</p>
-              <p className="mt-2 text-3xl font-semibold">{questions.length}</p>
-            </div>
-
-            <div className="rounded-2xl border border-slate-800 bg-slate-950/60 p-4">
-              <p className="text-sm text-slate-400">Status</p>
-              <p className="mt-2 text-lg font-medium text-emerald-300">
-                {loading ? "Loading..." : "Live"}
-              </p>
-            </div>
-
-            <div className="rounded-2xl border border-slate-800 bg-slate-950/60 p-4">
-              <p className="text-sm text-slate-400">Source</p>
-              <p className="mt-2 text-lg font-medium text-slate-200">
-                Clustered questions only
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <div className="mb-6">
-          <h2 className="text-2xl font-semibold tracking-tight">
-            Active Questions
-          </h2>
-          <p className="mt-1 text-sm text-slate-400">
-            Click a question to open it and vote.
+          <p className="mt-3 max-w-2xl text-slate-300">
+            Each space has its own submissions, clustered questions, and votes.
+            The public <strong className="text-slate-200">open</strong> space is
+            the default; create a members-only space for a closed group (invite
+            link).
           </p>
         </div>
 
@@ -145,76 +116,97 @@ export default function HomePage() {
         )}
 
         {loading ? (
-          <div className="grid gap-6">
-            {[1, 2, 3].map((item) => (
-              <div
-                key={item}
-                className="animate-pulse rounded-3xl border border-slate-800 bg-slate-900/60 p-6"
-              >
-                <div className="h-6 w-2/3 rounded bg-slate-800" />
-                <div className="mt-4 h-4 w-full rounded bg-slate-800" />
-                <div className="mt-2 h-4 w-5/6 rounded bg-slate-800" />
-              </div>
-            ))}
-          </div>
-        ) : questions.length === 0 ? (
-          <div className="rounded-3xl border border-dashed border-slate-700 bg-slate-900/40 p-10 text-center">
-            <h3 className="text-xl font-semibold text-slate-200">
-              No active questions yet
-            </h3>
-            <p className="mt-3 text-slate-400">
-              Submit concerns, then run clustering in Admin to generate questions.
-            </p>
-          </div>
+          <p className="text-slate-400">Loading spaces...</p>
         ) : (
-          <div className="grid gap-6">
-            {questions.map((q) => (
-              <Link key={q.id} href={`/questions/${q.id}`} className="block">
-                <article className="rounded-3xl border border-slate-800 bg-slate-900/70 p-6 shadow-xl transition duration-200 hover:border-slate-700 hover:bg-slate-900">
-                  <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-                    <div className="max-w-3xl">
-                      <div className="mb-3 inline-flex rounded-full border border-violet-500/30 bg-violet-500/10 px-3 py-1 text-xs font-medium text-violet-300">
-                        {q.clusterId}
-                      </div>
-
-                      <h3 className="text-2xl font-semibold leading-tight text-white">
-                        {q.title}
-                      </h3>
-
-                      <p className="mt-3 text-slate-300">{q.description}</p>
-                    </div>
-
-                    <div className="min-w-[220px] rounded-2xl border border-slate-800 bg-slate-950/60 p-4">
-                      <p className="text-sm text-slate-400">Live Votes</p>
-                      <div className="mt-3 flex items-center gap-6">
-                        <div>
-                          <p className="text-xs uppercase tracking-wide text-emerald-300">
-                            Yes
-                          </p>
-                          <p className="text-2xl font-bold text-white">
-                            {q.votesYes}
-                          </p>
-                        </div>
-                        <div>
-                          <p className="text-xs uppercase tracking-wide text-rose-300">
-                            No
-                          </p>
-                          <p className="text-2xl font-bold text-white">
-                            {q.votesNo}
-                          </p>
-                        </div>
-                      </div>
-
-                      <p className="mt-4 text-xs text-slate-500">
-                        Source submissions: {q.sourceSubmissionIds.length}
-                      </p>
-                    </div>
+          <div className="grid gap-4 sm:grid-cols-2">
+            {spaces.map((s) => (
+              <Link
+                key={s.id}
+                href={`/s/${encodeURIComponent(s.slug)}`}
+                className="block rounded-2xl border border-slate-800 bg-slate-900/60 p-6 transition hover:border-cyan-500/40 hover:bg-slate-900"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <h2 className="text-xl font-semibold text-white">{s.name}</h2>
+                    <p className="mt-1 text-sm text-slate-500">/{s.slug}</p>
                   </div>
-                </article>
+                  {s.membersOnly && (
+                    <span className="shrink-0 rounded-full border border-amber-500/40 bg-amber-500/10 px-2 py-1 text-xs text-amber-200">
+                      Members
+                    </span>
+                  )}
+                </div>
+                {s.description ? (
+                  <p className="mt-3 text-sm text-slate-400">{s.description}</p>
+                ) : null}
               </Link>
             ))}
           </div>
         )}
+
+        <div className="mt-14 rounded-3xl border border-slate-800 bg-slate-900/50 p-8">
+          <h2 className="text-xl font-semibold text-white">Create a space</h2>
+          <p className="mt-2 text-sm text-slate-400">
+            Slug becomes the URL: <code className="text-cyan-300">/s/your-slug</code>
+          </p>
+          <form onSubmit={handleCreate} className="mt-6 space-y-4">
+            <div>
+              <label className="mb-1 block text-sm text-slate-300">Name</label>
+              <input
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                className="w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-2 text-slate-100"
+                placeholder="e.g. Creator community"
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-sm text-slate-300">Slug</label>
+              <input
+                value={slug}
+                onChange={(e) => setSlug(e.target.value.toLowerCase())}
+                className="w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-2 text-slate-100"
+                placeholder="e.g. my-channel"
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-sm text-slate-300">
+                Description (optional)
+              </label>
+              <input
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                className="w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-2 text-slate-100"
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-sm text-slate-300">Visibility</label>
+              <select
+                value={visibility}
+                onChange={(e) =>
+                  setVisibility(e.target.value as "public" | "members_only")
+                }
+                className="w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-2 text-slate-100"
+              >
+                <option value="public">Public — anyone can submit and vote</option>
+                <option value="members_only">
+                  Members only — need invite token
+                </option>
+              </select>
+            </div>
+            <button
+              type="submit"
+              disabled={creating}
+              className="rounded-xl bg-cyan-500 px-5 py-2 text-sm font-semibold text-slate-950 hover:bg-cyan-400 disabled:opacity-60"
+            >
+              {creating ? "Creating..." : "Create space"}
+            </button>
+          </form>
+          {createMsg && (
+            <p className="mt-4 whitespace-pre-wrap text-sm text-slate-300">
+              {createMsg}
+            </p>
+          )}
+        </div>
       </section>
     </main>
   );
