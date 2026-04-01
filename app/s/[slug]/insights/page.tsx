@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { use, useEffect, useState } from "react";
+import { use, useEffect, useState, type ReactNode } from "react";
 import { spaceFetch } from "../../../../lib/spaceApi";
 
 type InsightQuestion = {
@@ -291,7 +291,7 @@ function StatCard({ label, value }: { label: string; value: number }) {
   );
 }
 
-function InsightSection({
+function InsightSection<T>({
   title,
   subtitle,
   items = [],
@@ -299,8 +299,8 @@ function InsightSection({
 }: {
   title: string;
   subtitle: string;
-  items?: unknown[];
-  renderItem: (item: unknown, index: number) => React.ReactNode;
+  items?: T[];
+  renderItem: (item: T, index: number) => ReactNode;
 }) {
   return (
     <section className="rounded-3xl border border-slate-800 bg-slate-900/60 p-6 shadow-xl">
