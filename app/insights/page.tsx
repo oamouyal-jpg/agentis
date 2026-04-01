@@ -224,7 +224,7 @@ export default function InsightsPage() {
               title="Cluster Summary"
               subtitle="Which issue clusters are drawing the most engagement."
               items={data.clusterSummary}
-              renderItem={(item) => (
+              renderItem={(item: ClusterSummary) => (
                 <article
                   key={item.clusterId}
                   className="rounded-2xl border border-slate-800 bg-slate-900/70 p-5"
@@ -254,7 +254,7 @@ export default function InsightsPage() {
                       Titles in this cluster
                     </p>
                     <ul className="space-y-2 text-sm text-slate-400">
-                      {item.titles.map((title, index) => (
+                      {item.titles.map((title: string, index: number) => (
                         <li key={`${item.clusterId}-${index}`}>• {title}</li>
                       ))}
                     </ul>
