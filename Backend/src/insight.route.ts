@@ -1,6 +1,6 @@
 import express from "express";
-import { generateInsights } from "../services/insight.service";
-import { questions } from "../data/store"; // adjust if needed
+import { generateInsights } from "./services/insight.service";
+import { questions } from "./data/store";
 
 const router = express.Router();
 
