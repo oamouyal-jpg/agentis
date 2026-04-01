@@ -7,6 +7,7 @@ dotenv.config({
 
 import express, { Request, Response } from "express";
 import cors from "cors";
+import { aiClusterSubmissions } from "./services/aiClusterSubmissions";
 
 console.log("ENV PATH:", path.resolve(__dirname, "../.env"));
 console.log("OPENAI KEY LOADED:", !!process.env.OPENAI_API_KEY);
@@ -103,10 +104,8 @@ app.get("/insights", async (_req: Request, res: Response) => {
       }
     >();
 
-    for (const q of enriched) {
-      const clusterId = q.clusterId || "unclustered";
-      const clusterTitle =
-        q.clusterTitle || q.clusterLabel || q.cluster || "Unclustered";
+    const clusterId = q.clusterId || "unclustered";
+const clusterTitle = q.clusterId || "Unclustered";
 
       if (!clusterMap.has(clusterId)) {
         clusterMap.set(clusterId, {
