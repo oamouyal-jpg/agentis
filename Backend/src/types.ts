@@ -1,6 +1,7 @@
 export type Submission = {
   id: number;
   text: string;
+  createdAt: number;
   clustered?: boolean;
   clusterId?: string;
 };
