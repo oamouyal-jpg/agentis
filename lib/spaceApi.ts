@@ -33,8 +33,12 @@ export function getHostForSpace(slug: string): string | null {
 }
 
 export function spaceUrl(slug: string, path: string): string {
-  const base = `${API_BASE}/spaces/${encodeURIComponent(slug)}`;
   const p = path.startsWith("/") ? path : `/${path}`;
+  // "open" is the legacy default space and uses unscoped routes (e.g. POST /submit).
+  if (slug === "open") {
+    return `${API_BASE}${p}`;
+  }
+  const base = `${API_BASE}/spaces/${encodeURIComponent(slug)}`;
   return `${base}${p}`;
 }
 
