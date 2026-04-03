@@ -43,35 +43,38 @@ export default function SubmitPage() {
   }
 
   return (
-    <main className="min-h-screen bg-slate-950 text-slate-100">
-      <header className="border-b border-slate-800 bg-slate-950/80 backdrop-blur">
-        <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-4">
-          <Link href="/" className="text-lg font-semibold tracking-tight text-white">
+    <main className="min-h-screen bg-zinc-950 text-zinc-100">
+      <header className="border-b border-zinc-800 bg-zinc-950/90 backdrop-blur-sm">
+        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 px-6 py-4 lg:px-10">
+          <Link
+            href="/"
+            className="font-display text-lg font-medium tracking-tight text-zinc-100"
+          >
             Agentis
           </Link>
 
-          <nav className="flex items-center gap-3">
+          <nav className="flex flex-wrap items-center gap-2">
             <Link
               href="/"
-              className="rounded-xl border border-slate-700 px-4 py-2 text-sm text-slate-300 hover:bg-slate-800"
+              className="rounded-md border border-zinc-700 px-3 py-1.5 text-xs font-medium text-zinc-400 transition hover:border-zinc-600 hover:bg-zinc-900 hover:text-zinc-200"
             >
               Home
             </Link>
             <Link
               href="/submit"
-              className="rounded-xl border border-cyan-500/40 bg-cyan-500/10 px-4 py-2 text-sm text-cyan-300 hover:bg-cyan-500/20"
+              className="rounded-md border border-zinc-600 bg-zinc-900 px-3 py-1.5 text-xs font-medium text-zinc-200"
             >
               Submit
             </Link>
             <Link
               href="/admin"
-              className="rounded-xl border border-slate-700 px-4 py-2 text-sm text-slate-300 hover:bg-slate-800"
+              className="rounded-md border border-zinc-700 px-3 py-1.5 text-xs font-medium text-zinc-400 transition hover:border-zinc-600 hover:bg-zinc-900 hover:text-zinc-200"
             >
               Admin
             </Link>
             <Link
               href="/insights"
-              className="rounded-xl border border-slate-700 px-4 py-2 text-sm text-slate-300 hover:bg-slate-800"
+              className="rounded-md border border-zinc-700 px-3 py-1.5 text-xs font-medium text-zinc-400 transition hover:border-zinc-600 hover:bg-zinc-900 hover:text-zinc-200"
             >
               Insights
             </Link>
@@ -79,27 +82,30 @@ export default function SubmitPage() {
         </div>
       </header>
 
-      <section className="mx-auto max-w-3xl px-6 py-12">
-        <div className="rounded-3xl border border-slate-800 bg-slate-900/70 p-8 shadow-2xl">
-          <div className="mb-4 inline-flex rounded-full border border-cyan-500/30 bg-cyan-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-cyan-300">
-            Public Signal Input
-          </div>
+      <section className="mx-auto max-w-3xl px-6 py-12 lg:px-10">
+        <div className="mb-8 border-b border-zinc-800 pb-6">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-zinc-500">
+            Open space
+          </p>
+          <p className="mt-1 font-mono text-[11px] text-zinc-600">default civic desk</p>
+        </div>
 
-          <h1 className="text-3xl font-bold tracking-tight text-white sm:text-4xl">
+        <div className="rounded-sm border border-zinc-800 bg-zinc-900/25 p-8 lg:p-10">
+          <h1 className="font-display text-3xl font-medium tracking-tight text-zinc-50 sm:text-[2rem]">
             Submit a public concern
           </h1>
 
-          <p className="mt-4 text-base leading-7 text-slate-300">
-            Describe a real issue affecting daily life, community wellbeing, or public
-            priorities. Agentis will cluster similar submissions into structured civic
-            questions for people to vote on.
+          <p className="mt-4 max-w-2xl text-sm leading-relaxed text-zinc-400">
+            Describe an issue affecting daily life, community wellbeing, or public
+            priorities. Similar submissions are clustered automatically into
+            structured questions for voting.
           </p>
 
-          <form onSubmit={handleSubmit} className="mt-8 space-y-5">
+          <form onSubmit={handleSubmit} className="mt-10 space-y-6">
             <div>
               <label
                 htmlFor="submission"
-                className="mb-3 block text-sm font-medium text-slate-200"
+                className="mb-2 block text-[11px] font-medium uppercase tracking-wider text-zinc-500"
               >
                 Your concern
               </label>
@@ -110,28 +116,27 @@ export default function SubmitPage() {
                 onChange={(e) => setText(e.target.value)}
                 rows={8}
                 placeholder="Example: Rent in my area is rising too fast and ordinary workers can no longer afford to live near where they work."
-                className="w-full rounded-2xl border border-slate-700 bg-slate-950/70 px-4 py-4 text-slate-100 outline-none transition placeholder:text-slate-500 focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20"
+                className="w-full rounded-sm border border-zinc-700 bg-zinc-950 px-4 py-3 text-sm leading-relaxed text-zinc-100 outline-none transition placeholder:text-zinc-600 focus:border-zinc-500 focus:ring-1 focus:ring-zinc-500/30"
               />
             </div>
 
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-              <p className="text-sm text-slate-400">
-                Clear, specific submissions produce better clustering and stronger civic
-                questions.
+            <div className="flex flex-col gap-4 border-t border-zinc-800/80 pt-6 sm:flex-row sm:items-center sm:justify-between">
+              <p className="text-xs text-zinc-500">
+                Clear, specific wording produces stronger questions and insights.
               </p>
 
               <button
                 type="submit"
                 disabled={submitting}
-                className="rounded-2xl bg-cyan-500 px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-cyan-400 disabled:cursor-not-allowed disabled:opacity-60"
+                className="rounded-sm bg-zinc-100 px-6 py-2.5 text-sm font-medium text-zinc-950 transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-50"
               >
-                {submitting ? "Submitting..." : "Submit concern"}
+                {submitting ? "Submitting…" : "Submit concern"}
               </button>
             </div>
           </form>
 
           {message && (
-            <div className="mt-6 rounded-2xl border border-slate-800 bg-slate-950/60 p-4 text-sm text-slate-200">
+            <div className="mt-8 rounded-sm border border-zinc-800 bg-zinc-950/80 px-4 py-3 text-sm text-zinc-300">
               {message}
             </div>
           )}

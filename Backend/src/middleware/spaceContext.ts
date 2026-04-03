@@ -39,6 +39,16 @@ function readInviteToken(req: Request): string | undefined {
   return undefined;
 }
 
+function readHostToken(req: Request): string | undefined {
+  const q = req.query.host;
+  if (typeof q === "string" && q) return q;
+  const h = req.headers["x-space-host"];
+  if (typeof h === "string" && h) return h;
+  const body = req.body as { host?: string } | undefined;
+  if (body && typeof body.host === "string" && body.host) return body.host;
+  return undefined;
+}
+
 export function requireSpaceAccess(
   req: Request,
   res: Response,
@@ -55,6 +65,12 @@ export function requireSpaceAccess(
     return;
   }
 
+  const hostTok = readHostToken(req);
+  if (hostTok && space.hostSecret && hostTok === space.hostSecret) {
+    next();
+    return;
+  }
+
   const token = readInviteToken(req);
   if (token && space.inviteSecret && token === space.inviteSecret) {
     next();
@@ -65,5 +81,27 @@ export function requireSpaceAccess(
     error: "Members only",
     code: "MEMBERS_ONLY",
     hint: "Open the invite link or send header X-Space-Invite with your invite token.",
+  });
+}
+
+export function requireHostAccess(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): void {
+  const space = res.locals.space as Space | undefined;
+  if (!space) {
+    res.status(500).json({ error: "Space not loaded" });
+    return;
+  }
+  const token = readHostToken(req);
+  if (token && space.hostSecret && token === space.hostSecret) {
+    next();
+    return;
+  }
+  res.status(403).json({
+    error: "Host only",
+    code: "HOST_ONLY",
+    hint: "Open the host link or send header X-Space-Host with your host token.",
   });
 }

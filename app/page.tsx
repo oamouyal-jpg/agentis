@@ -1,9 +1,15 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import type { FormEvent } from "react";
 import { useEffect, useMemo, useState } from "react";
+import { FollowGroupButton } from "./components/FollowGroupButton";
+import { LanguageSwitcher } from "./components/LanguageSwitcher";
+import { PressDeskHero } from "./components/press/PressDeskHero";
+import { useI18n } from "../lib/i18n/I18nProvider";
 import { API_BASE } from "../lib/apiBase";
+import { useMyGroups } from "../lib/useMyGroups";
 
 type SpaceListItem = {
   id: number;
@@ -12,13 +18,76 @@ type SpaceListItem = {
   description: string;
   visibility: "public" | "members_only";
   membersOnly: boolean;
+  branding?: { logoUrl?: string; accentColor?: string };
 };
 
+function SpaceActionBar({
+  slug,
+  name,
+  isMembers,
+}: {
+  slug: string;
+  name: string;
+  isMembers: boolean;
+}) {
+  const { t } = useI18n();
+  const base = `/s/${encodeURIComponent(slug)}`;
+  return (
+    <div className="mt-5 flex flex-col gap-3 border-t border-zinc-800 pt-5">
+      <div className="flex flex-wrap items-center gap-2">
+        <FollowGroupButton slug={slug} name={name} />
+      </div>
+      <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-zinc-500">
+        {t("spaceActions.actions")}
+      </p>
+      <div className="flex flex-wrap gap-2">
+        <Link
+          href={base}
+          className="inline-flex flex-1 min-w-[7.5rem] items-center justify-center rounded-md bg-zinc-100 px-3 py-2.5 text-center text-sm font-medium text-zinc-950 transition hover:bg-white sm:flex-none"
+        >
+          {t("spaceActions.open")}
+        </Link>
+        <Link
+          href={`${base}/submit`}
+          className="inline-flex flex-1 min-w-[7.5rem] items-center justify-center rounded-md border border-zinc-700 bg-zinc-900/50 px-3 py-2.5 text-center text-sm font-medium text-zinc-200 transition hover:border-zinc-600 hover:bg-zinc-800"
+        >
+          {t("spaceActions.shareSomething")}
+        </Link>
+        <Link
+          href={`${base}/insights`}
+          className="inline-flex flex-1 min-w-[7.5rem] items-center justify-center rounded-md border border-zinc-700 bg-zinc-900/50 px-3 py-2.5 text-center text-sm font-medium text-zinc-200 transition hover:border-zinc-600 hover:bg-zinc-800"
+        >
+          {t("spaceActions.results")}
+        </Link>
+        <Link
+          href={`${base}/admin`}
+          className="inline-flex flex-1 min-w-[7.5rem] items-center justify-center rounded-md border border-zinc-700 bg-zinc-900/50 px-3 py-2.5 text-center text-sm font-medium text-zinc-300 transition hover:border-zinc-600 hover:bg-zinc-800"
+        >
+          {t("spaceActions.forHosts")}
+        </Link>
+      </div>
+      {isMembers && (
+        <p className="text-xs leading-relaxed text-zinc-500">
+          {t("spaceActions.inviteNote")}
+        </p>
+      )}
+    </div>
+  );
+}
+
 export default function HomePage() {
+  const { t } = useI18n();
+  const router = useRouter();
+  const { groups: myGroups, unfollow } = useMyGroups();
+  const [joinSlug, setJoinSlug] = useState("");
   const [spaces, setSpaces] = useState<SpaceListItem[]>([]);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
   const [openQuestionCount, setOpenQuestionCount] = useState<number | null>(null);
+  const [wireQuestions, setWireQuestions] = useState<
+    { id: number; title: string; imageUrl?: string }[]
+  >([]);
+  const [openStatsLoading, setOpenStatsLoading] = useState(true);
 
   const [name, setName] = useState("");
   const [slug, setSlug] = useState("");
@@ -37,7 +106,12 @@ export default function HomePage() {
         const data = await res.json();
         setSpaces(Array.isArray(data) ? data : []);
       } catch (e) {
-        setError(e instanceof Error ? e.message : "Failed to load spaces");
+        const raw = e instanceof Error ? e.message : "Failed to load spaces";
+        const network =
+          raw === "Failed to fetch" ||
+          raw === "Load failed" ||
+          raw.includes("NetworkError");
+        setError(network ? t("home.errors.loadNetwork") : raw);
       } finally {
         setLoading(false);
       }
@@ -48,17 +122,32 @@ export default function HomePage() {
   useEffect(() => {
     async function loadOpenStats() {
       try {
+        setOpenStatsLoading(true);
         const res = await fetch(`${API_BASE}/spaces/open/questions`, {
           cache: "no-store",
         });
         if (!res.ok) {
           setOpenQuestionCount(null);
+          setWireQuestions([]);
           return;
         }
         const data = await res.json();
-        setOpenQuestionCount(Array.isArray(data) ? data.length : 0);
+        const list = Array.isArray(data) ? data : [];
+        setOpenQuestionCount(list.length);
+        setWireQuestions(
+          list
+            .slice(0, 4)
+            .map((q: { id: number; title: string; imageUrl?: string }) => ({
+              id: q.id,
+              title: q.title,
+              imageUrl: q.imageUrl,
+            }))
+        );
       } catch {
         setOpenQuestionCount(null);
+        setWireQuestions([]);
+      } finally {
+        setOpenStatsLoading(false);
       }
     }
     loadOpenStats();
@@ -74,11 +163,18 @@ export default function HomePage() {
     return { publicSpaces: pub, membersSpaces: mem };
   }, [spaces]);
 
+  function handleJoinBySlug(e: FormEvent) {
+    e.preventDefault();
+    const raw = joinSlug.trim().toLowerCase().replace(/\s+/g, "-");
+    if (!raw) return;
+    router.push(`/s/${encodeURIComponent(raw)}`);
+  }
+
   async function handleCreate(e: FormEvent) {
     e.preventDefault();
     setCreateMsg("");
     if (!name.trim() || !slug.trim()) {
-      setCreateMsg("Name and slug are required.");
+      setCreateMsg(t("home.createNeedName"));
       return;
     }
     try {
@@ -93,14 +189,26 @@ export default function HomePage() {
           visibility,
         }),
       });
-      const data = await res.json();
+      let data: { error?: string; inviteSecret?: string; space?: { slug: string } } =
+        {};
+      try {
+        data = await res.json();
+      } catch {
+        if (!res.ok) {
+          throw new Error(t("home.errors.createGeneric"));
+        }
+      }
       if (!res.ok) {
         throw new Error(data.error || "Create failed");
       }
+      const createdSlug = data.space?.slug ?? "";
       setCreateMsg(
-        data.inviteSecret
-          ? `Space created. Save this invite token (shown once): ${data.inviteSecret}\nShare: /s/${data.space.slug}?invite=${encodeURIComponent(data.inviteSecret)}`
-          : "Space created."
+        data.inviteSecret && createdSlug
+          ? t("home.createSuccessInvite", {
+              invite: data.inviteSecret,
+              link: `/s/${createdSlug}?invite=${encodeURIComponent(data.inviteSecret)}`,
+            })
+          : t("home.createSuccess")
       );
       setName("");
       setSlug("");
@@ -110,284 +218,334 @@ export default function HomePage() {
         setSpaces(await listRes.json());
       }
     } catch (e) {
-      setCreateMsg(e instanceof Error ? e.message : "Create failed");
+      const msg = e instanceof Error ? e.message : "Create failed";
+      const network =
+        msg === "Failed to fetch" ||
+        msg === "Load failed" ||
+        msg.includes("NetworkError");
+      setCreateMsg(network ? t("home.errors.createNetwork") : msg);
     } finally {
       setCreating(false);
     }
   }
 
   return (
-    <main className="min-h-screen bg-slate-950 text-slate-100">
-      <header className="border-b border-slate-800 bg-slate-950/80 backdrop-blur">
-        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 px-6 py-4">
-          <div className="text-lg font-semibold tracking-tight text-white">
-            Agentis
-          </div>
-          <nav className="flex flex-wrap items-center gap-2 sm:gap-3">
+    <main className="relative min-h-screen overflow-hidden bg-zinc-950 text-zinc-100">
+      <div
+        className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_80%_50%_at_50%_-20%,rgba(255,255,255,0.06),transparent_55%)]"
+        aria-hidden
+      />
+      <div className="relative z-10">
+        <header className="border-b border-zinc-800/80 bg-zinc-950/90 backdrop-blur-sm">
+          <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4 lg:px-10">
             <Link
-              href="/s/open"
-              className="rounded-xl border border-cyan-500/40 bg-cyan-500/10 px-4 py-2 text-sm text-cyan-300 hover:bg-cyan-500/20"
+              href="/"
+              className="font-display text-lg font-medium tracking-tight text-zinc-100"
             >
-              Public feed
+              {t("common.agentis")}
             </Link>
-            <Link
-              href="/s/open/submit"
-              className="rounded-xl border border-slate-700 px-4 py-2 text-sm text-slate-300 hover:bg-slate-800"
-            >
-              Submit
-            </Link>
-            <Link
-              href="/s/open/insights"
-              className="rounded-xl border border-slate-700 px-4 py-2 text-sm text-slate-300 hover:bg-slate-800"
-            >
-              Insights
-            </Link>
-            <Link
-              href="/s/open/admin"
-              className="rounded-xl border border-slate-700 px-4 py-2 text-sm text-slate-300 hover:bg-slate-800"
-            >
-              Admin
-            </Link>
-          </nav>
-        </div>
-      </header>
-
-      <section className="mx-auto max-w-6xl px-6 py-12">
-        <div className="mb-12 rounded-3xl border border-slate-800 bg-slate-900/70 p-8 shadow-2xl sm:p-10">
-          <div className="mb-4 inline-flex rounded-full border border-cyan-500/30 bg-cyan-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-cyan-300">
-            Civic Intelligence Platform
-          </div>
-
-          <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">
-            Agentis
-          </h1>
-
-          <p className="mt-4 max-w-3xl text-base leading-7 text-slate-300 sm:text-lg">
-            Turn raw concerns from the crowd into clustered questions, clear
-            yes/no votes, and live insights — so signal rises above noise for
-            communities, creators, and organisations.
-          </p>
-
-          <div className="mt-10 flex flex-wrap gap-4">
-            <Link
-              href="/s/open"
-              className="inline-flex rounded-2xl bg-cyan-500 px-6 py-3 text-sm font-semibold text-slate-950 transition hover:bg-cyan-400"
-            >
-              Go to public space
-            </Link>
-            <Link
-              href="/s/open/submit"
-              className="inline-flex rounded-2xl border border-slate-600 px-6 py-3 text-sm font-semibold text-slate-200 hover:bg-slate-800"
-            >
-              Submit a concern
-            </Link>
-          </div>
-
-          <div className="mt-10 grid gap-4 sm:grid-cols-3">
-            <div className="rounded-2xl border border-slate-800 bg-slate-950/60 p-4">
-              <p className="text-sm text-slate-400">Public questions</p>
-              <p className="mt-2 text-3xl font-semibold text-white">
-                {openQuestionCount === null ? "—" : openQuestionCount}
-              </p>
-              <p className="mt-1 text-xs text-slate-500">in the open feed</p>
-            </div>
-            <div className="rounded-2xl border border-slate-800 bg-slate-950/60 p-4">
-              <p className="text-sm text-slate-400">Spaces</p>
-              <p className="mt-2 text-3xl font-semibold text-white">
-                {loading ? "—" : spaces.length}
-              </p>
-              <p className="mt-1 text-xs text-slate-500">public + members-only</p>
-            </div>
-            <div className="rounded-2xl border border-slate-800 bg-slate-950/60 p-4">
-              <p className="text-sm text-slate-400">Status</p>
-              <p className="mt-2 text-lg font-medium text-emerald-300">
-                {loading ? "Loading…" : "Live"}
-              </p>
-              <p className="mt-1 text-xs text-slate-500">Crowd-sourced issues</p>
-            </div>
-          </div>
-        </div>
-
-        <div className="mb-6">
-          <h2 className="text-2xl font-semibold tracking-tight text-white">
-            Choose a space
-          </h2>
-          <p className="mt-2 max-w-3xl text-slate-400">
-            <span className="text-slate-300">Public</span> spaces — anyone can
-            submit and vote.{" "}
-            <span className="text-slate-300">Members-only</span> spaces — use an
-            invite link from the host.
-          </p>
-        </div>
-
-        {error && (
-          <div className="mb-6 rounded-2xl border border-red-500/30 bg-red-500/10 p-4 text-sm text-red-200">
-            {error}
-          </div>
-        )}
-
-        {loading ? (
-          <div className="grid gap-4 sm:grid-cols-2">
-            {[1, 2, 3, 4].map((i) => (
-              <div
-                key={i}
-                className="h-32 animate-pulse rounded-2xl border border-slate-800 bg-slate-900/60"
-              />
-            ))}
-          </div>
-        ) : (
-          <div className="space-y-10">
-            {publicSpaces.length > 0 && (
-              <div>
-                <h3 className="mb-4 text-sm font-semibold uppercase tracking-wide text-emerald-400/90">
-                  Public spaces
-                </h3>
-                <div className="grid gap-4 sm:grid-cols-2">
-                  {publicSpaces.map((s) => (
-                    <Link
-                      key={s.id}
-                      href={`/s/${encodeURIComponent(s.slug)}`}
-                      className="block rounded-2xl border border-emerald-500/20 bg-slate-900/60 p-6 transition hover:border-emerald-500/50 hover:bg-slate-900"
-                    >
-                      <div className="flex items-start justify-between gap-3">
-                        <div>
-                          <h2 className="text-xl font-semibold text-white">
-                            {s.name}
-                          </h2>
-                          <p className="mt-1 font-mono text-sm text-slate-500">
-                            /s/{s.slug}
-                          </p>
-                        </div>
-                        <span className="shrink-0 rounded-full border border-emerald-500/40 bg-emerald-500/10 px-2.5 py-1 text-xs font-medium text-emerald-300">
-                          Public
-                        </span>
-                      </div>
-                      {s.description ? (
-                        <p className="mt-3 text-sm leading-relaxed text-slate-400">
-                          {s.description}
-                        </p>
-                      ) : null}
-                    </Link>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {membersSpaces.length > 0 && (
-              <div>
-                <h3 className="mb-4 text-sm font-semibold uppercase tracking-wide text-amber-400/90">
-                  Members-only spaces
-                </h3>
-                <p className="mb-4 text-sm text-slate-500">
-                  You need an invite link with a token. Open the link shared by
-                  the host, then browse and vote as usual.
-                </p>
-                <div className="grid gap-4 sm:grid-cols-2">
-                  {membersSpaces.map((s) => (
-                    <Link
-                      key={s.id}
-                      href={`/s/${encodeURIComponent(s.slug)}`}
-                      className="block rounded-2xl border border-amber-500/20 bg-slate-900/60 p-6 transition hover:border-amber-500/50 hover:bg-slate-900"
-                    >
-                      <div className="flex items-start justify-between gap-3">
-                        <div>
-                          <h2 className="text-xl font-semibold text-white">
-                            {s.name}
-                          </h2>
-                          <p className="mt-1 font-mono text-sm text-slate-500">
-                            /s/{s.slug}
-                          </p>
-                        </div>
-                        <span className="shrink-0 rounded-full border border-amber-500/40 bg-amber-500/10 px-2.5 py-1 text-xs font-medium text-amber-200">
-                          Private
-                        </span>
-                      </div>
-                      {s.description ? (
-                        <p className="mt-3 text-sm leading-relaxed text-slate-400">
-                          {s.description}
-                        </p>
-                      ) : null}
-                    </Link>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {!loading && spaces.length === 0 && (
-              <p className="text-slate-500">No spaces yet. Create one below.</p>
-            )}
-          </div>
-        )}
-
-        <details className="mt-14 rounded-3xl border border-slate-800 bg-slate-900/40 p-6">
-          <summary className="cursor-pointer text-lg font-semibold text-white">
-            Create a new space
-          </summary>
-          <p className="mt-2 text-sm text-slate-400">
-            For a channel, org, or campaign. Slug becomes{" "}
-            <code className="text-cyan-300">/s/your-slug</code>.
-          </p>
-          <form onSubmit={handleCreate} className="mt-6 space-y-4">
-            <div>
-              <label className="mb-1 block text-sm text-slate-300">Name</label>
-              <input
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                className="w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-2 text-slate-100"
-                placeholder="e.g. Creator community"
-              />
-            </div>
-            <div>
-              <label className="mb-1 block text-sm text-slate-300">Slug</label>
-              <input
-                value={slug}
-                onChange={(e) => setSlug(e.target.value.toLowerCase())}
-                className="w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-2 text-slate-100"
-                placeholder="e.g. my-channel"
-              />
-            </div>
-            <div>
-              <label className="mb-1 block text-sm text-slate-300">
-                Description (optional)
-              </label>
-              <input
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                className="w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-2 text-slate-100"
-              />
-            </div>
-            <div>
-              <label className="mb-1 block text-sm text-slate-300">
-                Visibility
-              </label>
-              <select
-                value={visibility}
-                onChange={(e) =>
-                  setVisibility(e.target.value as "public" | "members_only")
-                }
-                className="w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-2 text-slate-100"
+            <div className="flex flex-wrap items-center gap-3">
+              <Link
+                href="/my-groups"
+                className="rounded-md border border-zinc-700 px-3 py-1.5 text-xs font-medium text-zinc-400 transition hover:border-zinc-600 hover:bg-zinc-900 hover:text-zinc-200"
               >
-                <option value="public">Public — anyone can submit and vote</option>
-                <option value="members_only">
-                  Members only — invite token required
-                </option>
-              </select>
+                {t("home.myGroupsTitle")}
+              </Link>
+              <span className="hidden text-xs text-zinc-500 sm:inline">
+                {t("header.tagline")}
+              </span>
+              <LanguageSwitcher />
             </div>
-            <button
-              type="submit"
-              disabled={creating}
-              className="rounded-xl bg-cyan-500 px-5 py-2 text-sm font-semibold text-slate-950 hover:bg-cyan-400 disabled:opacity-60"
-            >
-              {creating ? "Creating…" : "Create space"}
-            </button>
-          </form>
-          {createMsg && (
-            <p className="mt-4 whitespace-pre-wrap text-sm text-slate-300">
-              {createMsg}
+          </div>
+        </header>
+
+        <div className="mx-auto max-w-6xl px-6 pb-24 pt-10 sm:pt-12 lg:px-10">
+          <PressDeskHero
+            openQuestionCount={openQuestionCount}
+            wireQuestions={wireQuestions}
+            statsLoading={openStatsLoading}
+            groupCount={loading ? null : spaces.length}
+            groupsLoading={loading}
+          />
+
+          <section className="mb-10 rounded-sm border border-zinc-800 bg-zinc-900/35 p-8">
+            <h2 className="font-display text-lg font-medium text-zinc-50">
+              {t("home.getStartedTitle")}
+            </h2>
+            <p className="mt-2 max-w-xl text-sm leading-relaxed text-zinc-400">
+              {t("home.getStartedBody")}
             </p>
-          )}
-        </details>
-      </section>
+            <div className="mt-8 flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-stretch">
+              <Link
+                href="/s/open"
+                className="inline-flex items-center justify-center rounded-md bg-zinc-100 px-8 py-3 text-center text-sm font-medium text-zinc-950 transition hover:bg-white"
+              >
+                {t("home.enterPublicGroup")}
+              </Link>
+              <form
+                onSubmit={handleJoinBySlug}
+                className="flex min-w-0 flex-1 flex-col gap-2 sm:max-w-md sm:flex-row sm:items-center"
+              >
+                <input
+                  value={joinSlug}
+                  onChange={(e) => setJoinSlug(e.target.value)}
+                  placeholder={t("home.groupNamePlaceholder")}
+                  className="min-w-0 flex-1 rounded-md border border-zinc-700 bg-zinc-950 px-4 py-2.5 text-sm text-zinc-100 placeholder:text-zinc-600 focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-500"
+                  aria-label={t("home.labelGroupName")}
+                />
+                <button
+                  type="submit"
+                  className="rounded-md border border-zinc-600 bg-zinc-900 px-5 py-2.5 text-sm font-medium text-zinc-200 transition hover:border-zinc-500 hover:bg-zinc-800"
+                >
+                  {t("home.go")}
+                </button>
+              </form>
+            </div>
+            <p className="mt-6 text-xs text-zinc-500">{t("home.inviteOnlyHint")}</p>
+            <p className="mt-3 text-sm text-zinc-500">
+              {t("home.hostingPrefix")}{" "}
+              <a
+                href="#create-group"
+                className="font-medium text-zinc-300 underline decoration-zinc-600 underline-offset-2 hover:text-zinc-100"
+              >
+                {t("home.createGroupLink")}
+              </a>
+            </p>
+          </section>
+
+          {/* Create — always visible (not tucked away) */}
+          <section
+            id="create-group"
+            className="mb-10 rounded-sm border border-zinc-800 bg-zinc-900/35 p-8"
+          >
+            <h2 className="font-display text-lg font-medium text-zinc-50">
+              {t("home.createTitle")}
+            </h2>
+            <p className="mt-2 max-w-xl text-sm leading-relaxed text-zinc-400">
+              {t("home.createBody")}
+            </p>
+            <form onSubmit={handleCreate} className="mt-8 max-w-lg space-y-4">
+              <div>
+                <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-zinc-500">
+                  {t("home.labelGroupName")}
+                </label>
+                <input
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  className="w-full rounded-md border border-zinc-700 bg-zinc-950 px-4 py-2.5 text-sm text-zinc-100 placeholder:text-zinc-600 focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-500"
+                  placeholder={t("home.phGroupName")}
+                />
+              </div>
+              <div>
+                <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-zinc-500">
+                  {t("home.labelShortName")}
+                </label>
+                <input
+                  value={slug}
+                  onChange={(e) => setSlug(e.target.value.toLowerCase())}
+                  className="w-full rounded-md border border-zinc-700 bg-zinc-950 px-4 py-2.5 text-sm text-zinc-100 placeholder:text-zinc-600 focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-500"
+                  placeholder={t("home.phShortName")}
+                />
+              </div>
+              <div>
+                <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-zinc-500">
+                  {t("home.labelDescription")}
+                </label>
+                <input
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  className="w-full rounded-md border border-zinc-700 bg-zinc-950 px-4 py-2.5 text-sm text-zinc-100 placeholder:text-zinc-600 focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-500"
+                  placeholder={t("home.phDescription")}
+                />
+              </div>
+              <div>
+                <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-zinc-500">
+                  {t("home.labelAccess")}
+                </label>
+                <select
+                  value={visibility}
+                  onChange={(e) =>
+                    setVisibility(e.target.value as "public" | "members_only")
+                  }
+                  className="w-full rounded-md border border-zinc-700 bg-zinc-950 px-4 py-2.5 text-sm text-zinc-100 focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-500"
+                >
+                  <option value="public">{t("home.accessPublic")}</option>
+                  <option value="members_only">
+                    {t("home.accessRestricted")}
+                  </option>
+                </select>
+              </div>
+              <button
+                type="submit"
+                disabled={creating}
+                className="rounded-md bg-zinc-100 px-5 py-2.5 text-sm font-medium text-zinc-950 transition hover:bg-white disabled:opacity-50"
+              >
+                {creating ? t("home.creating") : t("home.createSubmit")}
+              </button>
+            </form>
+            {createMsg && (
+              <p className="mt-6 max-w-lg whitespace-pre-wrap rounded-md border border-zinc-800 bg-zinc-950/80 p-4 text-sm text-zinc-300">
+                {createMsg}
+              </p>
+            )}
+          </section>
+
+          {/* Spaces — primary content, full width */}
+          <section className="mb-10">
+            <div className="mb-8 border-b border-zinc-800 pb-8">
+              <h2 className="font-display text-xl font-medium text-zinc-50">
+                {t("home.directoryTitle")}
+              </h2>
+              <p className="mt-2 max-w-xl text-sm text-zinc-500">
+                {t("home.directoryBody")}
+              </p>
+            </div>
+
+            {error && (
+              <div className="mb-6 rounded-md border border-red-900/50 bg-red-950/30 p-4 text-sm text-red-200/90">
+                {error}
+              </div>
+            )}
+
+            {loading ? (
+              <div className="grid gap-4 sm:grid-cols-2">
+                {[1, 2, 3, 4].map((i) => (
+                  <div
+                    key={i}
+                    className="h-52 animate-pulse rounded-lg border border-zinc-800 bg-zinc-900/40"
+                  />
+                ))}
+              </div>
+            ) : (
+              <div className="space-y-10">
+                {publicSpaces.length > 0 && (
+                  <div>
+                    <h3 className="mb-4 text-[11px] font-semibold uppercase tracking-[0.14em] text-zinc-500">
+                      {t("home.openAccess")}
+                    </h3>
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      {publicSpaces.map((s) => (
+                        <article
+                          key={s.id}
+                          className="rounded-lg border border-zinc-800 bg-zinc-900/30 p-6 transition hover:border-zinc-700"
+                        >
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="flex min-w-0 items-center gap-3">
+                              {s.branding?.logoUrl ? (
+                                // eslint-disable-next-line @next/next/no-img-element -- org logos can be on any host (https only)
+                                <img
+                                  src={s.branding.logoUrl}
+                                  alt=""
+                                  className="h-10 w-10 shrink-0 rounded-md border border-zinc-800 bg-zinc-950 object-contain p-1"
+                                />
+                              ) : (
+                                <div className="h-10 w-10 shrink-0 rounded-md border border-zinc-800 bg-zinc-950" />
+                              )}
+                              <div className="min-w-0">
+                                <h3
+                                  className="text-base font-semibold text-zinc-100"
+                                  style={
+                                    s.branding?.accentColor
+                                      ? { color: s.branding.accentColor }
+                                      : undefined
+                                  }
+                                >
+                                  {s.name}
+                                </h3>
+                                <p className="mt-1 font-mono text-[11px] text-zinc-600">
+                                  {s.slug}
+                                </p>
+                              </div>
+                            </div>
+                            <span className="shrink-0 rounded border border-zinc-700 bg-zinc-900 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-zinc-400">
+                              {t("home.badgeOpen")}
+                            </span>
+                          </div>
+                          {s.description ? (
+                            <p className="mt-3 text-sm leading-relaxed text-zinc-400">
+                              {s.description}
+                            </p>
+                          ) : null}
+                          <SpaceActionBar
+                            slug={s.slug}
+                            name={s.name}
+                            isMembers={false}
+                          />
+                        </article>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {membersSpaces.length > 0 && (
+                  <div>
+                    <h3 className="mb-4 text-[11px] font-semibold uppercase tracking-[0.14em] text-zinc-500">
+                      {t("home.restrictedAccess")}
+                    </h3>
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      {membersSpaces.map((s) => (
+                        <article
+                          key={s.id}
+                          className="rounded-lg border border-zinc-800 bg-zinc-900/30 p-6 transition hover:border-zinc-700"
+                        >
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="flex min-w-0 items-center gap-3">
+                              {s.branding?.logoUrl ? (
+                                // eslint-disable-next-line @next/next/no-img-element -- org logos can be on any host (https only)
+                                <img
+                                  src={s.branding.logoUrl}
+                                  alt=""
+                                  className="h-10 w-10 shrink-0 rounded-md border border-zinc-800 bg-zinc-950 object-contain p-1"
+                                />
+                              ) : (
+                                <div className="h-10 w-10 shrink-0 rounded-md border border-zinc-800 bg-zinc-950" />
+                              )}
+                              <div className="min-w-0">
+                                <h3
+                                  className="text-base font-semibold text-zinc-100"
+                                  style={
+                                    s.branding?.accentColor
+                                      ? { color: s.branding.accentColor }
+                                      : undefined
+                                  }
+                                >
+                                  {s.name}
+                                </h3>
+                                <p className="mt-1 font-mono text-[11px] text-zinc-600">
+                                  {s.slug}
+                                </p>
+                              </div>
+                            </div>
+                            <span className="shrink-0 rounded border border-zinc-700 bg-zinc-900 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-zinc-400">
+                              {t("home.badgeRestricted")}
+                            </span>
+                          </div>
+                          {s.description ? (
+                            <p className="mt-3 text-sm leading-relaxed text-zinc-400">
+                              {s.description}
+                            </p>
+                          ) : null}
+                          <SpaceActionBar
+                            slug={s.slug}
+                            name={s.name}
+                            isMembers
+                          />
+                        </article>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {!loading && spaces.length === 0 && (
+                  <p className="rounded-md border border-dashed border-zinc-800 bg-zinc-950/50 px-6 py-10 text-center text-sm text-zinc-500">
+                    {t("home.directoryEmpty")}
+                  </p>
+                )}
+              </div>
+            )}
+          </section>
+        </div>
+      </div>
     </main>
   );
 }

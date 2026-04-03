@@ -1,11 +1,12 @@
 "use client";
 
 import { useEffect } from "react";
-import { storeInviteFromUrl } from "../../../lib/spaceApi";
+import { storeHostFromUrl, storeInviteFromUrl } from "../../../lib/spaceApi";
 
 export function SpaceInviteCapture({ slug }: { slug: string }) {
   useEffect(() => {
     storeInviteFromUrl(slug);
+    storeHostFromUrl(slug);
   }, [slug]);
   return null;
 }

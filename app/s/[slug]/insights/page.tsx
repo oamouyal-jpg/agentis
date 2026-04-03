@@ -2,6 +2,14 @@
 
 import Link from "next/link";
 import { use, useEffect, useState, type ReactNode } from "react";
+import {
+  ClusterEngagementChart,
+  KeyCountBars,
+  OverviewVoteSplitChart,
+  TopQuestionsVotesChart,
+} from "../../../components/insights/InsightCharts";
+import { MindChangesPanel } from "../../../components/insights/MindChangesPanel";
+import { InsightQuestionCard } from "../../../components/insights/InsightQuestionCard";
 import { spaceFetch } from "../../../../lib/spaceApi";
 
 type InsightQuestion = {
@@ -40,6 +48,22 @@ type InsightsResponse = {
   mostControversial: InsightQuestion[];
   strongestConsensus: ConsensusQuestion[];
   clusterSummary: ClusterSummary[];
+  demographics?: {
+    gender: Array<{ key: string; count: number }>;
+    ageRange: Array<{ key: string; count: number }>;
+    country: Array<{ key: string; count: number }>;
+    town: Array<{ key: string; count: number }>;
+    totalEvents: number;
+  };
+  mindChanges: {
+    total: number;
+    yesToNo: number;
+    noToYes: number;
+    shareOfVoters: number;
+    medianMsToFlip: number | null;
+    medianTimeLabel: string | null;
+    topQuestions: Array<{ questionId: number; title: string; flipCount: number }>;
+  };
 };
 
 export default function SpaceInsightsPage({
@@ -80,41 +104,50 @@ export default function SpaceInsightsPage({
   }, [slug]);
 
   return (
-    <main className="min-h-screen bg-slate-950 text-slate-100">
-      <header className="border-b border-slate-800 bg-slate-950/80 backdrop-blur">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-          <Link href="/" className="text-lg font-semibold tracking-tight text-white">
+    <main className="min-h-screen bg-zinc-950 text-zinc-100">
+      <header className="border-b border-zinc-800 bg-zinc-950/90 backdrop-blur-sm">
+        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 px-6 py-4 lg:px-10">
+          <Link
+            href="/"
+            className="font-display text-lg font-medium tracking-tight text-zinc-100"
+          >
             Agentis
           </Link>
 
-          <nav className="flex flex-wrap items-center gap-3">
+          <nav className="flex flex-wrap items-center gap-2">
             <Link
               href="/"
-              className="rounded-xl border border-slate-700 px-4 py-2 text-sm text-slate-300 hover:bg-slate-800"
-            >
-              Spaces
-            </Link>
-            <Link
-              href={base}
-              className="rounded-xl border border-slate-700 px-4 py-2 text-sm text-slate-300 hover:bg-slate-800"
+              className="rounded-md border border-zinc-700 px-3 py-1.5 text-xs font-medium text-zinc-400 transition hover:border-zinc-600 hover:bg-zinc-900 hover:text-zinc-200"
             >
               Home
             </Link>
             <Link
+              href="/"
+              className="rounded-md border border-zinc-700 px-3 py-1.5 text-xs font-medium text-zinc-400 transition hover:border-zinc-600 hover:bg-zinc-900 hover:text-zinc-200"
+            >
+              Directory
+            </Link>
+            <Link
+              href={base}
+              className="rounded-md border border-zinc-700 px-3 py-1.5 text-xs font-medium text-zinc-400 transition hover:border-zinc-600 hover:bg-zinc-900 hover:text-zinc-200"
+            >
+              Overview
+            </Link>
+            <Link
               href={`${base}/submit`}
-              className="rounded-xl border border-slate-700 px-4 py-2 text-sm text-slate-300 hover:bg-slate-800"
+              className="rounded-md border border-zinc-700 px-3 py-1.5 text-xs font-medium text-zinc-400 transition hover:border-zinc-600 hover:bg-zinc-900 hover:text-zinc-200"
             >
               Submit
             </Link>
             <Link
               href={`${base}/admin`}
-              className="rounded-xl border border-slate-700 px-4 py-2 text-sm text-slate-300 hover:bg-slate-800"
+              className="rounded-md border border-zinc-700 px-3 py-1.5 text-xs font-medium text-zinc-400 transition hover:border-zinc-600 hover:bg-zinc-900 hover:text-zinc-200"
             >
               Admin
             </Link>
             <Link
               href={`${base}/insights`}
-              className="rounded-xl border border-cyan-500/40 bg-cyan-500/10 px-4 py-2 text-sm text-cyan-300"
+              className="rounded-md border border-zinc-600 bg-zinc-900 px-3 py-1.5 text-xs font-medium text-zinc-200"
             >
               Insights
             </Link>
@@ -122,18 +155,16 @@ export default function SpaceInsightsPage({
         </div>
       </header>
 
-      <section className="mx-auto max-w-6xl px-6 py-12">
-        <div className="mb-10 rounded-3xl border border-slate-800 bg-slate-900/70 p-8 shadow-2xl">
-          <div className="mb-4 inline-flex rounded-full border border-cyan-500/30 bg-cyan-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-cyan-300">
-            Insight Engine
-          </div>
-
-          <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">
-            Insights — {slug}
+      <section className="mx-auto max-w-6xl px-6 py-12 lg:px-10">
+        <div className="mb-10 border-b border-zinc-800 pb-8">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-zinc-500">
+            Insights
+          </p>
+          <h1 className="font-display mt-2 text-3xl font-medium tracking-tight text-zinc-50 sm:text-4xl">
+            {slug}
           </h1>
-
-          <p className="mt-4 max-w-3xl text-base leading-7 text-slate-300 sm:text-lg">
-            Voting behaviour in this space only.
+          <p className="mt-3 max-w-2xl text-sm leading-relaxed text-zinc-400">
+            Voting behaviour in this group — charts update from live totals.
           </p>
 
           <div className="mt-8 grid gap-4 sm:grid-cols-4">
@@ -145,76 +176,131 @@ export default function SpaceInsightsPage({
               label="Total votes"
               value={data?.overview.totalVotes ?? 0}
             />
-            <StatCard label="Yes votes" value={data?.overview.totalYes ?? 0} />
-            <StatCard label="No votes" value={data?.overview.totalNo ?? 0} />
+            <StatCard label="Yes" value={data?.overview.totalYes ?? 0} />
+            <StatCard label="No" value={data?.overview.totalNo ?? 0} />
           </div>
         </div>
 
         {loading && (
-          <div className="rounded-3xl border border-slate-800 bg-slate-900/70 p-8">
-            Loading insights...
+          <div className="rounded-sm border border-zinc-800 bg-zinc-900/40 p-8 text-sm text-zinc-500">
+            Loading insights…
           </div>
         )}
 
         {error && (
-          <div className="rounded-3xl border border-red-500/30 bg-red-500/10 p-6 text-red-200">
+          <div className="rounded-sm border border-red-500/30 bg-red-950/40 p-6 text-sm text-red-200">
             {error}
+          </div>
+        )}
+
+        {!loading && !error && data && data.overview.totalQuestions > 0 && (
+          <div className="mb-10 space-y-8">
+            {data.mindChanges ? (
+              <MindChangesPanel
+                mindChanges={data.mindChanges}
+                questionHref={(id) => `${base}/questions/${id}`}
+              />
+            ) : null}
+            <div className="grid gap-8 lg:grid-cols-2">
+              <div className="rounded-sm border border-zinc-800 bg-zinc-900/25 p-8">
+                <OverviewVoteSplitChart
+                  totalYes={data.overview.totalYes}
+                  totalNo={data.overview.totalNo}
+                />
+              </div>
+              <div className="rounded-sm border border-zinc-800 bg-zinc-900/25 p-8">
+                <ClusterEngagementChart
+                  rows={data.clusterSummary.map((c) => ({
+                    clusterId: c.clusterId,
+                    totalVotes: c.totalVotes,
+                  }))}
+                />
+              </div>
+            </div>
+
+            <div className="rounded-sm border border-zinc-800 bg-zinc-900/25 p-8">
+              <TopQuestionsVotesChart
+                rows={data.topQuestions.map((q) => ({
+                  id: q.id,
+                  title: q.title,
+                  totalVotes: q.totalVotes,
+                }))}
+                questionHref={(id) => `${base}/questions/${id}`}
+              />
+            </div>
+
+            {data.demographics && data.demographics.totalEvents > 0 ? (
+              <div className="grid gap-8 lg:grid-cols-2">
+                <div className="rounded-sm border border-zinc-800 bg-zinc-900/25 p-8">
+                  <KeyCountBars title="Gender" rows={data.demographics.gender} />
+                </div>
+                <div className="rounded-sm border border-zinc-800 bg-zinc-900/25 p-8">
+                  <KeyCountBars title="Age range" rows={data.demographics.ageRange} />
+                </div>
+                <div className="rounded-sm border border-zinc-800 bg-zinc-900/25 p-8">
+                  <KeyCountBars title="Country" rows={data.demographics.country} />
+                </div>
+                <div className="rounded-sm border border-zinc-800 bg-zinc-900/25 p-8">
+                  <KeyCountBars title="Town / city" rows={data.demographics.town} />
+                </div>
+              </div>
+            ) : null}
           </div>
         )}
 
         {!loading && !error && data && (
           <div className="space-y-8">
             <InsightSection
-              title="Top Questions"
-              subtitle="Questions receiving the most total votes."
+              title="Top questions"
+              subtitle="Highest turnout."
               items={data.topQuestions}
               renderItem={(item) => (
-                <QuestionInsightCard
+                <InsightQuestionCard
                   key={item.id}
                   title={item.title}
                   description={item.description}
                   clusterId={item.clusterId}
                   totalVotes={item.totalVotes}
-                  yesLabel={`${Math.round(item.yesRatio * 100)}% yes`}
-                  noLabel={`${Math.round(item.noRatio * 100)}% no`}
+                  yesRatio={item.yesRatio}
+                  noRatio={item.noRatio}
                   href={`${base}/questions/${item.id}`}
                 />
               )}
             />
 
             <InsightSection
-              title="Most Controversial"
-              subtitle="Questions with the closest split between yes and no."
+              title="Most controversial"
+              subtitle="Closest yes / no split."
               items={data.mostControversial}
               renderItem={(item) => (
-                <QuestionInsightCard
+                <InsightQuestionCard
                   key={item.id}
                   title={item.title}
                   description={item.description}
                   clusterId={item.clusterId}
                   totalVotes={item.totalVotes}
-                  yesLabel={`${Math.round(item.yesRatio * 100)}% yes`}
-                  noLabel={`${Math.round(item.noRatio * 100)}% no`}
-                  extraLabel={`controversy ${Math.round(item.controversyScore * 100)}%`}
+                  yesRatio={item.yesRatio}
+                  noRatio={item.noRatio}
+                  extraLabel={`Controversy ${Math.round(item.controversyScore * 100)}%`}
                   href={`${base}/questions/${item.id}`}
                 />
               )}
             />
 
             <InsightSection
-              title="Strongest Consensus"
-              subtitle="Questions showing the clearest agreement."
+              title="Strongest consensus"
+              subtitle="Clearest agreement."
               items={data.strongestConsensus}
               renderItem={(item) => (
-                <QuestionInsightCard
+                <InsightQuestionCard
                   key={item.id}
                   title={item.title}
                   description={item.description}
                   clusterId={item.clusterId}
                   totalVotes={item.totalVotes}
-                  yesLabel={`${Math.round(item.yesRatio * 100)}% yes`}
-                  noLabel={`${Math.round(item.noRatio * 100)}% no`}
-                  extraLabel={`${item.consensusSide.toUpperCase()} consensus ${Math.round(
+                  yesRatio={item.yesRatio}
+                  noRatio={item.noRatio}
+                  extraLabel={`${item.consensusSide.toUpperCase()} · ${Math.round(
                     item.consensusStrength * 100
                   )}%`}
                   href={`${base}/questions/${item.id}`}
@@ -223,44 +309,38 @@ export default function SpaceInsightsPage({
             />
 
             <InsightSection
-              title="Cluster Summary"
-              subtitle="Which issue clusters are drawing the most engagement."
+              title="Clusters"
+              subtitle="Engagement and titles per theme."
               items={data.clusterSummary}
               renderItem={(item: ClusterSummary) => (
                 <article
                   key={item.clusterId}
-                  className="rounded-2xl border border-slate-800 bg-slate-900/70 p-5"
+                  className="rounded-sm border border-zinc-800 bg-zinc-950/50 p-5"
                 >
-                  <div className="mb-3 inline-flex rounded-full border border-violet-500/30 bg-violet-500/10 px-3 py-1 text-xs font-medium text-violet-300">
+                  <div className="mb-3 inline-flex rounded-sm border border-zinc-700 bg-zinc-900/80 px-2 py-0.5 font-mono text-[10px] text-zinc-500">
                     {item.clusterId}
                   </div>
 
                   <div className="grid gap-4 sm:grid-cols-2">
                     <div>
-                      <p className="text-sm text-slate-400">Questions in cluster</p>
-                      <p className="mt-1 text-2xl font-semibold text-white">
+                      <p className="text-xs text-zinc-500">Questions</p>
+                      <p className="mt-1 font-display text-xl font-medium tabular-nums text-zinc-100">
                         {item.questionCount}
                       </p>
                     </div>
-
                     <div>
-                      <p className="text-sm text-slate-400">Total votes</p>
-                      <p className="mt-1 text-2xl font-semibold text-white">
+                      <p className="text-xs text-zinc-500">Votes</p>
+                      <p className="mt-1 font-display text-xl font-medium tabular-nums text-zinc-100">
                         {item.totalVotes}
                       </p>
                     </div>
                   </div>
 
-                  <div className="mt-4">
-                    <p className="mb-2 text-sm font-medium text-slate-300">
-                      Titles in this cluster
-                    </p>
-                    <ul className="space-y-2 text-sm text-slate-400">
-                      {item.titles.map((title: string, index: number) => (
-                        <li key={`${item.clusterId}-${index}`}>• {title}</li>
-                      ))}
-                    </ul>
-                  </div>
+                  <ul className="mt-4 space-y-1.5 border-t border-zinc-800/80 pt-4 text-xs text-zinc-500">
+                    {item.titles.map((title: string, index: number) => (
+                      <li key={`${item.clusterId}-${index}`}>— {title}</li>
+                    ))}
+                  </ul>
                 </article>
               )}
             />
@@ -268,12 +348,13 @@ export default function SpaceInsightsPage({
         )}
 
         {!loading && !error && data && data.overview.totalQuestions === 0 && (
-          <div className="mt-8 rounded-3xl border border-dashed border-slate-700 bg-slate-900/40 p-10 text-center">
-            <h2 className="text-xl font-semibold text-slate-200">
+          <div className="mt-8 rounded-sm border border-dashed border-zinc-800 bg-zinc-900/30 px-8 py-12 text-center">
+            <h2 className="font-display text-lg font-medium text-zinc-200">
               No insights yet
             </h2>
-            <p className="mt-3 text-slate-400">
-              Submit concerns, run clustering, and collect votes to generate insights.
+            <p className="mt-3 text-sm text-zinc-500">
+              Submit concerns — clustering runs automatically — then collect votes
+              to see charts here.
             </p>
           </div>
         )}
@@ -284,9 +365,11 @@ export default function SpaceInsightsPage({
 
 function StatCard({ label, value }: { label: string; value: number }) {
   return (
-    <div className="rounded-2xl border border-slate-800 bg-slate-950/60 p-4">
-      <p className="text-sm text-slate-400">{label}</p>
-      <p className="mt-2 text-3xl font-semibold text-white">{value}</p>
+    <div className="rounded-sm border border-zinc-800 bg-zinc-900/40 p-4">
+      <p className="text-xs font-medium text-zinc-500">{label}</p>
+      <p className="mt-2 font-display text-2xl font-medium tabular-nums text-zinc-50">
+        {value}
+      </p>
     </div>
   );
 }
@@ -303,78 +386,19 @@ function InsightSection<T>({
   renderItem: (item: T, index: number) => ReactNode;
 }) {
   return (
-    <section className="rounded-3xl border border-slate-800 bg-slate-900/60 p-6 shadow-xl">
+    <section className="rounded-sm border border-zinc-800 bg-zinc-900/20 p-6">
       <div className="mb-6">
-        <h2 className="text-2xl font-semibold tracking-tight text-white">
-          {title}
-        </h2>
-        <p className="mt-1 text-sm text-slate-400">{subtitle}</p>
+        <h2 className="font-display text-xl font-medium text-zinc-100">{title}</h2>
+        <p className="mt-1 text-sm text-zinc-500">{subtitle}</p>
       </div>
 
       {!items || items.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-slate-700 bg-slate-950/50 p-6 text-sm text-slate-500">
-          No insight items yet.
+        <div className="rounded-sm border border-dashed border-zinc-800 bg-zinc-950/50 p-6 text-sm text-zinc-600">
+          No items yet.
         </div>
       ) : (
         <div className="grid gap-4">{items.map(renderItem)}</div>
       )}
     </section>
-  );
-}
-
-function QuestionInsightCard({
-  title,
-  description,
-  clusterId,
-  totalVotes,
-  yesLabel,
-  noLabel,
-  extraLabel,
-  href,
-}: {
-  title: string;
-  description: string;
-  clusterId: string;
-  totalVotes: number;
-  yesLabel: string;
-  noLabel: string;
-  extraLabel?: string;
-  href: string;
-}) {
-  return (
-    <article className="rounded-2xl border border-slate-800 bg-slate-950/60 p-5">
-      <div className="mb-3 inline-flex rounded-full border border-violet-500/30 bg-violet-500/10 px-3 py-1 text-xs font-medium text-violet-300">
-        {clusterId}
-      </div>
-
-      <h3 className="text-xl font-semibold text-white">{title}</h3>
-      <p className="mt-2 text-slate-300">{description}</p>
-
-      <div className="mt-4 flex flex-wrap gap-3 text-sm">
-        <span className="rounded-full border border-slate-700 px-3 py-1 text-slate-300">
-          {totalVotes} total votes
-        </span>
-        <span className="rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 text-emerald-300">
-          {yesLabel}
-        </span>
-        <span className="rounded-full border border-rose-500/30 bg-rose-500/10 px-3 py-1 text-rose-300">
-          {noLabel}
-        </span>
-        {extraLabel && (
-          <span className="rounded-full border border-cyan-500/30 bg-cyan-500/10 px-3 py-1 text-cyan-300">
-            {extraLabel}
-          </span>
-        )}
-      </div>
-
-      <div className="mt-5">
-        <Link
-          href={href}
-          className="inline-flex rounded-xl border border-slate-700 px-4 py-2 text-sm text-slate-300 hover:bg-slate-800"
-        >
-          Open question
-        </Link>
-      </div>
-    </article>
   );
 }

@@ -13,9 +13,10 @@ import express, { Request, Response } from "express";
 import cors from "cors";
 import rateLimit from "express-rate-limit";
 import adminRoutes from "./modules/ai/admin.routes";
-import { dataStore } from "./store/store";
+import { scheduleClusteringAfterSubmission } from "./modules/ai/runClusteringForSpace";
+import { dataStore, type Question } from "./store/store";
 import type { Space } from "./store/spaceTypes";
-import { loadSpaceBySlug, requireSpaceAccess } from "./middleware/spaceContext";
+import { loadSpaceBySlug, requireHostAccess, requireSpaceAccess } from "./middleware/spaceContext";
 import { buildInsightsForSpace } from "./services/buildInsights";
 
 const app = express();
@@ -28,13 +29,25 @@ const allowedOrigins = (process.env.CORS_ORIGINS || "")
   .map((s) => s.trim())
   .filter(Boolean);
 
+const isLocalBrowserOrigin = (origin: string) =>
+  /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/i.test(origin);
+
+/** In non-production, always allow localhost so dev works even if CORS_ORIGINS is copied from prod. */
+function corsAllowedOrigin(origin: string | undefined): boolean {
+  if (!origin) return true;
+  if (allowedOrigins.length === 0) return true;
+  if (allowedOrigins.includes(origin)) return true;
+  if (process.env.NODE_ENV !== "production" && isLocalBrowserOrigin(origin)) {
+    return true;
+  }
+  return false;
+}
+
 app.use(
   cors({
     origin(origin, callback) {
-      if (!origin) return callback(null, true);
-      if (allowedOrigins.length === 0) return callback(null, true);
-      if (allowedOrigins.includes(origin)) return callback(null, true);
-      return callback(new Error(`CORS blocked for origin: ${origin}`));
+      if (corsAllowedOrigin(origin)) return callback(null, true);
+      return callback(new Error(`CORS blocked for origin: ${origin || "(none)"}`));
     },
   })
 );
@@ -47,6 +60,29 @@ const writeLimiter = rateLimit({
   legacyHeaders: false,
 });
 
+/** Stable client id from localStorage; required for voting (one vote per device per question). */
+function parseDeviceId(req: Request): string | null {
+  const h = req.headers["x-space-device"];
+  const fromHeader = typeof h === "string" ? h.trim() : "";
+  const body = req.body as { deviceId?: string } | undefined;
+  const fromBody =
+    body && typeof body.deviceId === "string" ? body.deviceId.trim() : "";
+  const raw = fromHeader || fromBody;
+  if (!raw || raw.length > 128) return null;
+  if (!/^[a-zA-Z0-9_-]+$/.test(raw)) return null;
+  return raw;
+}
+
+function escapeCsvCell(value: string | number | undefined | null): string {
+  const s = value === undefined || value === null ? "" : String(value);
+  if (/[",\n\r]/.test(s)) return `"${s.replace(/"/g, '""')}"`;
+  return s;
+}
+
+function csvLine(cells: (string | number | undefined | null)[]): string {
+  return cells.map((c) => escapeCsvCell(c)).join(",") + "\r\n";
+}
+
 function publicSpace(space: Space) {
   return {
     id: space.id,
@@ -55,6 +91,7 @@ function publicSpace(space: Space) {
     description: space.description,
     visibility: space.visibility,
     membersOnly: space.visibility === "members_only",
+    branding: space.branding ?? undefined,
   };
 }
 
@@ -127,6 +164,7 @@ app.post("/spaces", writeLimiter, async (req: Request, res: Response) => {
       space: publicSpace(space),
       inviteSecret:
         space.visibility === "members_only" ? space.inviteSecret : undefined,
+      hostSecret: space.hostSecret,
     });
   } catch (e) {
     return res.status(400).json({
@@ -150,10 +188,331 @@ spaceRouter.get("/questions", async (_req: Request, res: Response) => {
   res.json(await dataStore.getQuestions(spaceId));
 });
 
+spaceRouter.get(
+  "/questions/:questionId/updates",
+  async (req: Request, res: Response) => {
+    try {
+      const spaceId = res.locals.spaceId as number;
+      const questionId = Number(req.params.questionId);
+      if (!Number.isFinite(questionId)) {
+        return res.status(400).json({ ok: false, error: "Invalid question id" });
+      }
+      const updates = await dataStore.listQuestionUpdates(spaceId, questionId);
+      return res.json(updates);
+    } catch (e) {
+      return res
+        .status(500)
+        .json({ ok: false, error: e instanceof Error ? e.message : String(e) });
+    }
+  }
+);
+
+spaceRouter.post(
+  "/questions/:questionId/updates",
+  writeLimiter,
+  requireHostAccess,
+  async (req: Request, res: Response) => {
+    try {
+      const spaceId = res.locals.spaceId as number;
+      const questionId = Number(req.params.questionId);
+      if (!Number.isFinite(questionId)) {
+        return res.status(400).json({ ok: false, error: "Invalid question id" });
+      }
+      const { title, body } = req.body as { title?: string; body?: string };
+      if (!title || typeof title !== "string" || !title.trim()) {
+        return res.status(400).json({ ok: false, error: "title is required" });
+      }
+      if (!body || typeof body !== "string" || !body.trim()) {
+        return res.status(400).json({ ok: false, error: "body is required" });
+      }
+      const created = await dataStore.addQuestionUpdate(spaceId, questionId, {
+        title,
+        body,
+      });
+      return res.json({ ok: true, update: created });
+    } catch (e) {
+      return res
+        .status(500)
+        .json({ ok: false, error: e instanceof Error ? e.message : String(e) });
+    }
+  }
+);
+
+spaceRouter.get(
+  "/questions/:questionId/comments",
+  async (req: Request, res: Response) => {
+    try {
+      const spaceId = res.locals.spaceId as number;
+      const questionId = Number(req.params.questionId);
+      if (!Number.isFinite(questionId)) {
+        return res.status(400).json({ ok: false, error: "Invalid question id" });
+      }
+      const list = await dataStore.listQuestionComments(spaceId, questionId);
+      const ids = list.map((c) => c.id);
+      const deviceId = parseDeviceId(req);
+      const info = await dataStore.getCommentLikeInfo(spaceId, ids, deviceId);
+      const enriched = list.map((c) => ({
+        ...c,
+        likeCount: info[c.id]?.count ?? 0,
+        liked: info[c.id]?.liked ?? false,
+      }));
+      return res.json(enriched);
+    } catch (e) {
+      return res.status(500).json({
+        ok: false,
+        error: e instanceof Error ? e.message : String(e),
+      });
+    }
+  }
+);
+
+spaceRouter.post(
+  "/questions/:questionId/comments/:commentId/like",
+  writeLimiter,
+  async (req: Request, res: Response) => {
+    try {
+      const spaceId = res.locals.spaceId as number;
+      const questionId = Number(req.params.questionId);
+      const commentId = Number(req.params.commentId);
+      if (!Number.isFinite(questionId) || !Number.isFinite(commentId)) {
+        return res.status(400).json({ ok: false, error: "Invalid id" });
+      }
+      const deviceId = parseDeviceId(req);
+      if (!deviceId) {
+        return res.status(400).json({
+          ok: false,
+          error: "Device id is required (header X-Space-Device or body deviceId)",
+          code: "DEVICE_ID_REQUIRED",
+        });
+      }
+      const result = await dataStore.toggleCommentLike(
+        spaceId,
+        questionId,
+        commentId,
+        deviceId
+      );
+      if (result.ok === false) {
+        return res.status(404).json({ ok: false, error: "Comment not found" });
+      }
+      return res.json({
+        ok: true,
+        likes: result.count,
+        liked: result.liked,
+      });
+    } catch (e) {
+      return res.status(500).json({
+        ok: false,
+        error: e instanceof Error ? e.message : String(e),
+      });
+    }
+  }
+);
+
+spaceRouter.post(
+  "/questions/:questionId/comments",
+  writeLimiter,
+  async (req: Request, res: Response) => {
+    try {
+      const spaceId = res.locals.spaceId as number;
+      const questionId = Number(req.params.questionId);
+      if (!Number.isFinite(questionId)) {
+        return res.status(400).json({ ok: false, error: "Invalid question id" });
+      }
+      const q = await dataStore.getQuestionById(spaceId, questionId);
+      if (!q) {
+        return res.status(404).json({ ok: false, error: "Question not found" });
+      }
+      const { body, authorName } = req.body as {
+        body?: string;
+        authorName?: string;
+      };
+      if (typeof body !== "string" || !body.trim()) {
+        return res.status(400).json({ ok: false, error: "body is required" });
+      }
+      const text = body.trim();
+      if (text.length > 4000) {
+        return res.status(400).json({ ok: false, error: "body is too long (max 4000)" });
+      }
+      let name: string | undefined;
+      if (authorName != null) {
+        if (typeof authorName !== "string") {
+          return res.status(400).json({ ok: false, error: "authorName must be a string" });
+        }
+        const t = authorName.trim();
+        if (t.length > 80) {
+          return res.status(400).json({ ok: false, error: "authorName is too long (max 80)" });
+        }
+        name = t || undefined;
+      }
+      const created = await dataStore.addQuestionComment(spaceId, questionId, {
+        body: text,
+        authorName: name,
+      });
+      return res.json({ ok: true, comment: created });
+    } catch (e) {
+      return res.status(500).json({
+        ok: false,
+        error: e instanceof Error ? e.message : String(e),
+      });
+    }
+  }
+);
+
+function normalizeQuestionImageUrl(raw: unknown): string | undefined {
+  if (raw === null || raw === "") return undefined;
+  if (typeof raw !== "string") return undefined;
+  const s = raw.trim();
+  if (!s) return undefined;
+  if (s.length > 2048) return undefined;
+  try {
+    const u = new URL(s);
+    if (u.protocol !== "https:") return undefined;
+    return s;
+  } catch {
+    return undefined;
+  }
+}
+
+/** null/empty clears; max 2000 chars. */
+function normalizeVoteMeaning(raw: unknown): string | undefined {
+  if (raw === null || raw === "") return undefined;
+  if (typeof raw !== "string") return undefined;
+  const s = raw.trim();
+  if (!s) return undefined;
+  if (s.length > 2000) return undefined;
+  return s;
+}
+
+spaceRouter.patch(
+  "/questions/:questionId",
+  writeLimiter,
+  requireHostAccess,
+  async (req: Request, res: Response) => {
+    try {
+      const spaceId = res.locals.spaceId as number;
+      const questionId = Number(req.params.questionId);
+      if (!Number.isFinite(questionId)) {
+        return res.status(400).json({ ok: false, error: "Invalid question id" });
+      }
+      const body = req.body as {
+        imageUrl?: unknown;
+        yesMeans?: unknown;
+        noMeans?: unknown;
+      };
+
+      const updates: Partial<Omit<Question, "id" | "spaceId">> = {};
+
+      if ("imageUrl" in body) {
+        const imageUrl = normalizeQuestionImageUrl(body.imageUrl);
+        if (body.imageUrl !== null && body.imageUrl !== "" && imageUrl === undefined) {
+          return res.status(400).json({
+            ok: false,
+            error: "imageUrl must be an https URL or empty to clear",
+          });
+        }
+        updates.imageUrl = imageUrl;
+      }
+
+      if ("yesMeans" in body) {
+        const v = normalizeVoteMeaning(body.yesMeans);
+        if (body.yesMeans !== null && body.yesMeans !== "" && v === undefined) {
+          return res.status(400).json({
+            ok: false,
+            error: "yesMeans must be text (max 2000 characters) or empty to clear",
+          });
+        }
+        updates.yesMeans = v;
+      }
+
+      if ("noMeans" in body) {
+        const v = normalizeVoteMeaning(body.noMeans);
+        if (body.noMeans !== null && body.noMeans !== "" && v === undefined) {
+          return res.status(400).json({
+            ok: false,
+            error: "noMeans must be text (max 2000 characters) or empty to clear",
+          });
+        }
+        updates.noMeans = v;
+      }
+
+      if (Object.keys(updates).length === 0) {
+        return res.status(400).json({
+          ok: false,
+          error: "Send at least one of: imageUrl, yesMeans, noMeans",
+        });
+      }
+
+      const updated = await dataStore.updateQuestion(spaceId, questionId, updates);
+      if (!updated) {
+        return res.status(404).json({ ok: false, error: "Question not found" });
+      }
+      return res.json({ ok: true, question: updated });
+    } catch (e) {
+      return res.status(500).json({
+        ok: false,
+        error: e instanceof Error ? e.message : String(e),
+      });
+    }
+  }
+);
+
 spaceRouter.get("/submissions", async (_req: Request, res: Response) => {
   const spaceId = res.locals.spaceId as number;
   res.json(await dataStore.getSubmissions(spaceId));
 });
+
+function normalizeBranding(input: unknown): Space["branding"] | undefined {
+  if (input === null) return undefined;
+  if (typeof input !== "object" || !input) return undefined;
+  const obj = input as any;
+
+  const rawLogo = typeof obj.logoUrl === "string" ? obj.logoUrl.trim() : "";
+  let logoUrl: string | undefined = undefined;
+  if (rawLogo) {
+    if (rawLogo.length > 2048) return undefined;
+    try {
+      const u = new URL(rawLogo);
+      if (u.protocol !== "https:") return undefined;
+      logoUrl = rawLogo;
+    } catch {
+      return undefined;
+    }
+  }
+
+  const rawAccent =
+    typeof obj.accentColor === "string" ? obj.accentColor.trim() : "";
+  const accentColor = rawAccent && rawAccent.length <= 64 ? rawAccent : undefined;
+
+  if (!logoUrl && !accentColor) return undefined;
+  return { logoUrl, accentColor };
+}
+
+spaceRouter.patch(
+  "/branding",
+  writeLimiter,
+  requireHostAccess,
+  async (req: Request, res: Response) => {
+    try {
+      const spaceId = res.locals.spaceId as number;
+      const branding = normalizeBranding((req.body as any)?.branding);
+      if ((req.body as any)?.branding != null && branding === undefined) {
+        return res.status(400).json({
+          ok: false,
+          error: "branding must include a valid https logoUrl and/or accentColor",
+        });
+      }
+      const updated = await dataStore.updateSpace(spaceId, { branding });
+      if (!updated) {
+        return res.status(404).json({ ok: false, error: "Space not found" });
+      }
+      return res.json({ ok: true, space: publicSpace(updated) });
+    } catch (e) {
+      return res
+        .status(500)
+        .json({ ok: false, error: e instanceof Error ? e.message : String(e) });
+    }
+  }
+);
 
 spaceRouter.get("/insights", async (_req: Request, res: Response) => {
   try {
@@ -169,6 +528,90 @@ spaceRouter.get("/insights", async (_req: Request, res: Response) => {
   }
 });
 
+spaceRouter.get("/petitions", async (_req: Request, res: Response) => {
+  try {
+    const spaceId = res.locals.spaceId as number;
+    const petitions = await dataStore.listPetitions(spaceId);
+    const withCounts = await Promise.all(
+      petitions.map(async (p) => {
+        const sigs = await dataStore.getPetitionSignatures(spaceId, p.id);
+        return { ...p, signatureCount: sigs.length };
+      })
+    );
+    res.json(withCounts);
+  } catch (e) {
+    res.status(500).json({ ok: false, error: "Failed to load petitions" });
+  }
+});
+
+spaceRouter.post(
+  "/petitions",
+  writeLimiter,
+  requireHostAccess,
+  async (req: Request, res: Response) => {
+  try {
+    const spaceId = res.locals.spaceId as number;
+    const { title, description, goalSignatures } = req.body as {
+      title?: string;
+      description?: string;
+      goalSignatures?: number;
+    };
+    if (!title || typeof title !== "string" || !title.trim()) {
+      return res.status(400).json({ ok: false, error: "title is required" });
+    }
+    if (!description || typeof description !== "string" || !description.trim()) {
+      return res.status(400).json({ ok: false, error: "description is required" });
+    }
+    const created = await dataStore.createPetition(spaceId, {
+      title,
+      description,
+      goalSignatures:
+        typeof goalSignatures === "number" && goalSignatures > 0
+          ? Math.floor(goalSignatures)
+          : undefined,
+    });
+    return res.json({ ok: true, petition: created });
+  } catch (e) {
+    return res.status(500).json({ ok: false, error: "Failed to create petition" });
+  }
+});
+
+spaceRouter.post(
+  "/petitions/:petitionId/sign",
+  writeLimiter,
+  async (req: Request, res: Response) => {
+    try {
+      const spaceId = res.locals.spaceId as number;
+      const petitionId = Number(req.params.petitionId);
+      if (!petitionId || Number.isNaN(petitionId)) {
+        return res.status(400).json({ ok: false, error: "Invalid petitionId" });
+      }
+      const petition = await dataStore.getPetitionById(spaceId, petitionId);
+      if (!petition) {
+        return res.status(404).json({ ok: false, error: "Petition not found" });
+      }
+      const { name, email, country, town } = req.body as {
+        name?: string;
+        email?: string;
+        country?: string;
+        town?: string;
+      };
+
+      const sig = await dataStore.signPetition(spaceId, petitionId, {
+        name: typeof name === "string" ? name : undefined,
+        email: typeof email === "string" ? email : undefined,
+        country: typeof country === "string" ? country : undefined,
+        town: typeof town === "string" ? town : undefined,
+      });
+
+      const count = (await dataStore.getPetitionSignatures(spaceId, petitionId)).length;
+      return res.json({ ok: true, signature: sig, signatureCount: count });
+    } catch (e) {
+      return res.status(500).json({ ok: false, error: "Failed to sign petition" });
+    }
+  }
+);
+
 spaceRouter.post("/submit", writeLimiter, async (req: Request, res: Response) => {
   try {
     const { text } = req.body as { text?: string };
@@ -182,6 +625,7 @@ spaceRouter.post("/submit", writeLimiter, async (req: Request, res: Response) =>
     }
 
     const submission = await dataStore.addSubmission(spaceId, text.trim());
+    scheduleClusteringAfterSubmission(spaceId);
 
     return res.json({
       ok: true,
@@ -198,9 +642,10 @@ spaceRouter.post("/submit", writeLimiter, async (req: Request, res: Response) =>
 
 spaceRouter.post("/vote", writeLimiter, async (req: Request, res: Response) => {
   try {
-    const { questionId, vote } = req.body as {
+    const { questionId, vote, demographics } = req.body as {
       questionId?: number;
       vote?: "yes" | "no";
+      demographics?: { gender?: string; ageRange?: string; country?: string; town?: string };
     };
     const spaceId = res.locals.spaceId as number;
 
@@ -218,9 +663,45 @@ spaceRouter.post("/vote", writeLimiter, async (req: Request, res: Response) => {
       });
     }
 
-    const updatedQuestion = await dataStore.voteOnQuestion(spaceId, questionId, vote);
+    const deviceId = parseDeviceId(req);
+    if (!deviceId) {
+      return res.status(400).json({
+        ok: false,
+        error: "Device id is required (header X-Space-Device or body deviceId)",
+        code: "DEVICE_ID_REQUIRED",
+      });
+    }
 
-    if (!updatedQuestion) {
+    const demo =
+      demographics && typeof demographics === "object"
+        ? {
+            gender:
+              typeof demographics.gender === "string" ? demographics.gender : undefined,
+            ageRange:
+              typeof demographics.ageRange === "string" ? demographics.ageRange : undefined,
+            country:
+              typeof demographics.country === "string" ? demographics.country : undefined,
+            town: typeof demographics.town === "string" ? demographics.town : undefined,
+          }
+        : undefined;
+
+    const result = await dataStore.submitQuestionVote(
+      spaceId,
+      questionId,
+      deviceId,
+      vote,
+      demo
+    );
+
+    if (result.ok === false) {
+      if (result.reason === "vote_change_limit") {
+        return res.status(409).json({
+          ok: false,
+          error:
+            "You have already changed your vote once for this question. Further changes are not allowed.",
+          code: "VOTE_CHANGE_LIMIT",
+        });
+      }
       return res.status(404).json({
         ok: false,
         error: "Question not found",
@@ -229,7 +710,10 @@ spaceRouter.post("/vote", writeLimiter, async (req: Request, res: Response) => {
 
     return res.json({
       ok: true,
-      question: updatedQuestion,
+      question: result.question,
+      voteStatus: result.status,
+      previousVote: result.previousVote,
+      canChangeVote: result.canChangeVote,
     });
   } catch (error) {
     return res.status(500).json({
@@ -239,6 +723,207 @@ spaceRouter.post("/vote", writeLimiter, async (req: Request, res: Response) => {
     });
   }
 });
+
+spaceRouter.get(
+  "/export.csv",
+  requireHostAccess,
+  async (req: Request, res: Response) => {
+    try {
+      const spaceId = res.locals.spaceId as number;
+      const space = res.locals.space as Space;
+      const kind = String(req.query.kind || "votes").toLowerCase();
+
+      let body = "";
+      const bom = "\uFEFF";
+
+      if (kind === "votes") {
+        const events = await dataStore.getVoteEvents(spaceId);
+        const questions = await dataStore.getQuestions(spaceId);
+        const titleById = new Map(questions.map((q) => [q.id, q.title]));
+        body +=
+          csvLine([
+            "event_id",
+            "question_id",
+            "question_title",
+            "vote",
+            "gender",
+            "age_range",
+            "country",
+            "town",
+            "created_at_ms",
+          ]);
+        for (const ev of events) {
+          body += csvLine([
+            ev.id,
+            ev.questionId,
+            titleById.get(ev.questionId) ?? "",
+            ev.vote,
+            ev.demographics?.gender,
+            ev.demographics?.ageRange,
+            ev.demographics?.country,
+            ev.demographics?.town,
+            ev.createdAt,
+          ]);
+        }
+      } else if (kind === "questions") {
+        const questions = await dataStore.getQuestions(spaceId);
+        body += csvLine([
+          "id",
+          "title",
+          "description",
+          "yes_means",
+          "no_means",
+          "votes_yes",
+          "votes_no",
+          "cluster_id",
+          "created_at_ms",
+        ]);
+        for (const q of questions) {
+          body += csvLine([
+            q.id,
+            q.title,
+            q.description,
+            q.yesMeans,
+            q.noMeans,
+            q.votesYes,
+            q.votesNo,
+            q.clusterId,
+            q.createdAt,
+          ]);
+        }
+      } else if (kind === "submissions") {
+        const submissions = await dataStore.getSubmissions(spaceId);
+        body += csvLine([
+          "id",
+          "text",
+          "clustered",
+          "cluster_id",
+          "created_at_ms",
+        ]);
+        for (const s of submissions) {
+          body += csvLine([
+            s.id,
+            s.text,
+            s.clustered ? "1" : "0",
+            s.clusterId,
+            s.createdAt,
+          ]);
+        }
+      } else if (kind === "petitions") {
+        const petitions = await dataStore.listPetitions(spaceId);
+        body += csvLine([
+          "id",
+          "title",
+          "description",
+          "goal_signatures",
+          "created_at_ms",
+        ]);
+        for (const p of petitions) {
+          body += csvLine([
+            p.id,
+            p.title,
+            p.description,
+            p.goalSignatures,
+            p.createdAt,
+          ]);
+        }
+      } else if (kind === "petition_signatures" || kind === "signatures") {
+        const petitions = await dataStore.listPetitions(spaceId);
+        body += csvLine([
+          "petition_id",
+          "petition_title",
+          "signature_id",
+          "name",
+          "email",
+          "country",
+          "town",
+          "created_at_ms",
+        ]);
+        for (const p of petitions) {
+          const sigs = await dataStore.getPetitionSignatures(spaceId, p.id);
+          for (const sig of sigs) {
+            body += csvLine([
+              p.id,
+              p.title,
+              sig.id,
+              sig.name,
+              sig.email,
+              sig.country,
+              sig.town,
+              sig.createdAt,
+            ]);
+          }
+        }
+      } else if (kind === "question_comments" || kind === "comments") {
+        const questions = await dataStore.getQuestions(spaceId);
+        const titleById = new Map(questions.map((q) => [q.id, q.title]));
+        const comments = await dataStore.listQuestionCommentsForSpace(spaceId);
+        body += csvLine([
+          "comment_id",
+          "question_id",
+          "question_title",
+          "author_name",
+          "body",
+          "created_at_ms",
+        ]);
+        for (const c of comments) {
+          body += csvLine([
+            c.id,
+            c.questionId,
+            titleById.get(c.questionId) ?? "",
+            c.authorName,
+            c.body,
+            c.createdAt,
+          ]);
+        }
+      } else if (kind === "vote_flips" || kind === "vote_changes") {
+        const questions = await dataStore.getQuestions(spaceId);
+        const titleById = new Map(questions.map((q) => [q.id, q.title]));
+        const flips = await dataStore.listVoteFlipEvents(spaceId);
+        body += csvLine([
+          "flip_id",
+          "question_id",
+          "question_title",
+          "from_vote",
+          "to_vote",
+          "ms_since_first_vote",
+          "created_at_ms",
+        ]);
+        for (const f of flips) {
+          body += csvLine([
+            f.id,
+            f.questionId,
+            titleById.get(f.questionId) ?? "",
+            f.fromVote,
+            f.toVote,
+            f.msSinceFirstVote,
+            f.createdAt,
+          ]);
+        }
+      } else {
+        return res.status(400).json({
+          ok: false,
+          error:
+            "Unknown kind. Use kind=votes|questions|submissions|petitions|petition_signatures|question_comments|vote_flips",
+        });
+      }
+
+      const safeSlug = space.slug.replace(/[^a-zA-Z0-9_-]/g, "_");
+      res.setHeader("Content-Type", "text/csv; charset=utf-8");
+      res.setHeader(
+        "Content-Disposition",
+        `attachment; filename="${safeSlug}-${kind}.csv"`
+      );
+      res.send(bom + body);
+    } catch (e) {
+      res.status(500).json({
+        ok: false,
+        error: "Export failed",
+        details: e instanceof Error ? e.message : String(e),
+      });
+    }
+  }
+);
 
 spaceRouter.use("/admin", writeLimiter, adminRoutes);
 
@@ -281,6 +966,7 @@ app.post("/submit", writeLimiter, async (req: Request, res: Response) => {
 
     const sid = await openSpaceId();
     const submission = await dataStore.addSubmission(sid, text.trim());
+    scheduleClusteringAfterSubmission(sid);
 
     return res.json({
       ok: true,
@@ -297,9 +983,10 @@ app.post("/submit", writeLimiter, async (req: Request, res: Response) => {
 
 app.post("/vote", writeLimiter, async (req: Request, res: Response) => {
   try {
-    const { questionId, vote } = req.body as {
+    const { questionId, vote, demographics } = req.body as {
       questionId?: number;
       vote?: "yes" | "no";
+      demographics?: { gender?: string; ageRange?: string; country?: string; town?: string };
     };
 
     if (typeof questionId !== "number") {
@@ -316,10 +1003,41 @@ app.post("/vote", writeLimiter, async (req: Request, res: Response) => {
       });
     }
 
-    const sid = await openSpaceId();
-    const updatedQuestion = await dataStore.voteOnQuestion(sid, questionId, vote);
+    const deviceId = parseDeviceId(req);
+    if (!deviceId) {
+      return res.status(400).json({
+        ok: false,
+        error: "Device id is required (header X-Space-Device or body deviceId)",
+        code: "DEVICE_ID_REQUIRED",
+      });
+    }
 
-    if (!updatedQuestion) {
+    const sid = await openSpaceId();
+
+    const demo =
+      demographics && typeof demographics === "object"
+        ? {
+            gender:
+              typeof demographics.gender === "string" ? demographics.gender : undefined,
+            ageRange:
+              typeof demographics.ageRange === "string" ? demographics.ageRange : undefined,
+            country:
+              typeof demographics.country === "string" ? demographics.country : undefined,
+            town: typeof demographics.town === "string" ? demographics.town : undefined,
+          }
+        : undefined;
+
+    const result = await dataStore.submitQuestionVote(sid, questionId, deviceId, vote, demo);
+
+    if (result.ok === false) {
+      if (result.reason === "vote_change_limit") {
+        return res.status(409).json({
+          ok: false,
+          error:
+            "You have already changed your vote once for this question. Further changes are not allowed.",
+          code: "VOTE_CHANGE_LIMIT",
+        });
+      }
       return res.status(404).json({
         ok: false,
         error: "Question not found",
@@ -328,7 +1046,10 @@ app.post("/vote", writeLimiter, async (req: Request, res: Response) => {
 
     return res.json({
       ok: true,
-      question: updatedQuestion,
+      question: result.question,
+      voteStatus: result.status,
+      previousVote: result.previousVote,
+      canChangeVote: result.canChangeVote,
     });
   } catch (error) {
     return res.status(500).json({

@@ -1,0 +1,104 @@
+{
+  "common": {
+    "agentis": "Agentis"
+  },
+  "header": {
+    "tagline": "Mesa de redacción · preguntas · votos · perspectivas",
+    "language": "Idioma"
+  },
+  "hero": {
+    "mastheadSub": "Mesa de redacción · Señal cívica",
+    "leadKicker": "Titular",
+    "leadTitle": "La historia no es el ruido: es lo que se repite cuando escuchas.",
+    "leadBody": "Agentis funciona como una redacción: llegan preocupaciones, se convierten en preguntas claras y los votos muestran dónde está la sala — con pruebas, no sensaciones.",
+    "openDesk": "Abrir la mesa",
+    "fileConcern": "Enviar una preocupación",
+    "statQuestions": "Preguntas activas",
+    "statGroups": "Grupos listados",
+    "statFormat": "Formato",
+    "statFormatValue": "Votos sí/no + temas agrupados",
+    "leadImageAlt": "Sala de redacción y contexto editorial",
+    "leadCaption": "Foto: mesa y cables — tu grupo sustituye la imprenta por preguntas en vivo.",
+    "wireTitle": "En el cable",
+    "wireLive": "Preguntas en vivo",
+    "wirePrompts": "Indicaciones",
+    "fieldTitle": "Desde el terreno",
+    "fieldSub": "Anclas visuales para lo que “ahora” significa: reuniones, calles, salas.",
+    "editorialKicker": "Indicaciones editoriales",
+    "editorialSub": "Úsalas al enviar o al orientar a un anfitrión — afinan la historia.",
+    "fallbackWire": [
+      {
+        "title": "¿Cuál es el primer tema que deberíamos someter a voto?",
+        "href": "/s/open/submit"
+      },
+      {
+        "title": "¿Dónde está la brecha entre lo que la gente siente y lo que escuchan los líderes?",
+        "href": "/s/open/submit"
+      },
+      {
+        "title": "¿Qué preocupación sigue apareciendo en tu barrio?",
+        "href": "/s/open/submit"
+      },
+      {
+        "title": "Abre la mesa pública — ve las preguntas mientras se forman.",
+        "href": "/s/open"
+      }
+    ],
+    "prompts": [
+      "Enmarca una preocupación en una sola frase que podría ser titular.",
+      "¿Quiénes salen más perjudicados si nos equivocamos — cítalos en una línea.",
+      "¿Qué cambiaría tu opinión: una prueba, una historia o un número?",
+      "Si esto fuera portada, ¿qué foto mostraría?"
+    ]
+  },
+  "home": {
+    "getStartedTitle": "Primeros pasos",
+    "getStartedBody": "Abre el grupo público por defecto, usa un enlace que te hayan dado o escribe el nombre del grupo de tu URL.",
+    "enterPublicGroup": "Entrar al grupo público",
+    "groupNamePlaceholder": "Nombre del grupo en el enlace",
+    "go": "Ir",
+    "inviteOnlyHint": "Grupos solo con invitación: usa el enlace de tu anfitrión (incluye acceso).",
+    "hostingPrefix": "¿Anfitrión de un grupo?",
+    "createGroupLink": "Crear un grupo",
+    "myGroupsTitle": "Mis grupos",
+    "myGroupsBody": "Accesos directos guardados en este navegador. Usa “Guardar en Mis grupos” dentro de un grupo o en una tarjeta abajo.",
+    "myGroupsEmpty": "Aún no hay accesos directos. Guarda los grupos que uses a menudo.",
+    "remove": "Quitar",
+    "createTitle": "Crear un grupo",
+    "createBody": "Para equipos, sedes o campañas. Tú defines el nombre, las reglas de acceso y las herramientas de anfitrión cuando el grupo esté activo.",
+    "labelGroupName": "Nombre del grupo",
+    "labelShortName": "Nombre corto (URL)",
+    "labelDescription": "Descripción (opcional)",
+    "labelAccess": "Acceso",
+    "phGroupName": "p. ej. Capítulo regional",
+    "phShortName": "p. ej. capitulo-regional",
+    "phDescription": "Propósito del grupo",
+    "accessPublic": "Abierto — cualquiera con el enlace",
+    "accessRestricted": "Restringido — se requiere invitación",
+    "creating": "Creando…",
+    "createSubmit": "Crear grupo",
+    "createNeedName": "Añade un nombre de grupo y un nombre corto para el enlace.",
+    "createSuccess": "Grupo creado.",
+    "createSuccessInvite": "Grupo creado. Guarda este código de invitación — solo lo mostramos una vez:\n{{invite}}\n\nComparte este enlace con personas de confianza:\n{{link}}",
+    "directoryTitle": "Directorio",
+    "directoryBody": "Los grupos abiertos aparecen abajo. Los grupos restringidos necesitan invitación del organizador.",
+    "openAccess": "Acceso abierto",
+    "restrictedAccess": "Acceso restringido",
+    "badgeOpen": "Abierto",
+    "badgeRestricted": "Restringido",
+    "directoryEmpty": "Aún no hay grupos en el directorio. Usa Primeros pasos arriba o crea un grupo.",
+    "errors": {
+      "loadNetwork": "No pudimos cargar la lista. Usa “Empieza aquí” arriba — sigue funcionando.",
+      "createNetwork": "No pudimos conectar con el servidor. Comprueba tu conexión e inténtalo de nuevo.",
+      "createGeneric": "Algo salió mal. Inténtalo de nuevo."
+    }
+  },
+  "spaceActions": {
+    "actions": "Acciones",
+    "open": "Abrir",
+    "shareSomething": "Compartir algo",
+    "results": "Resultados",
+    "forHosts": "Para anfitriones",
+    "inviteNote": "Este grupo es solo con invitación. Abre primero el enlace que te enviaron y vuelve aquí."
+  }
+}

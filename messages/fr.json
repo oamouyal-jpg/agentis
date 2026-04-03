@@ -1,0 +1,104 @@
+{
+  "common": {
+    "agentis": "Agentis"
+  },
+  "header": {
+    "tagline": "Bureau de presse · questions · votes · analyses",
+    "language": "Langue"
+  },
+  "hero": {
+    "mastheadSub": "Press desk · Civic signal",
+    "leadKicker": "Lead",
+    "leadTitle": "The story isn’t the noise — it’s what repeats when you listen.",
+    "leadBody": "Agentis works like a newsroom: concerns come in, get shaped into clear questions, and votes show where the room stands — with receipts, not vibes.",
+    "openDesk": "Open the desk",
+    "fileConcern": "File a concern",
+    "statQuestions": "Questions live",
+    "statGroups": "Groups listed",
+    "statFormat": "Format",
+    "statFormatValue": "Yes / no votes + clustered themes",
+    "leadImageAlt": "Newsroom and editorial context",
+    "leadCaption": "Photo: desk & wires — your group replaces the print with live questions.",
+    "wireTitle": "On the wire",
+    "wireLive": "Live questions",
+    "wirePrompts": "Prompts",
+    "fieldTitle": "From the field",
+    "fieldSub": "Visual anchors for what “current” means — meetings, streets, rooms.",
+    "editorialKicker": "Editorial prompts",
+    "editorialSub": "Use these when you submit or when you brief a host — they sharpen the story.",
+    "fallbackWire": [
+      {
+        "title": "What’s the one issue we should put to a vote first?",
+        "href": "/s/open/submit"
+      },
+      {
+        "title": "Where is the gap between what people feel and what leaders hear?",
+        "href": "/s/open/submit"
+      },
+      {
+        "title": "Which concern keeps coming up in your neighbourhood?",
+        "href": "/s/open/submit"
+      },
+      {
+        "title": "Open the public desk — see questions as they form.",
+        "href": "/s/open"
+      }
+    ],
+    "prompts": [
+      "Frame one concern as a single sentence a headline could use.",
+      "Who is most affected if we get this wrong — quote them in one line.",
+      "What would change your mind: evidence, a story, or a number?",
+      "If this were front-page news, what would the photo show?"
+    ]
+  },
+  "home": {
+    "getStartedTitle": "Get started",
+    "getStartedBody": "Open the default public group, use a link you were given, or enter the group name from your URL.",
+    "enterPublicGroup": "Enter public group",
+    "groupNamePlaceholder": "Group name from link",
+    "go": "Go",
+    "inviteOnlyHint": "Invite-only groups: use the link from your host (includes access).",
+    "hostingPrefix": "Hosting a group?",
+    "createGroupLink": "Create a group",
+    "myGroupsTitle": "My groups",
+    "myGroupsBody": "Shortcuts saved on this browser. Use \"Save to My groups\" inside a group or on a card below.",
+    "myGroupsEmpty": "No shortcuts yet. Save groups you use often for quick access.",
+    "remove": "Remove",
+    "createTitle": "Create a group",
+    "createBody": "For teams, chapters, or campaigns. You set the name, access rules, and host tools once the group is live.",
+    "labelGroupName": "Group name",
+    "labelShortName": "Short name (URL)",
+    "labelDescription": "Description (optional)",
+    "labelAccess": "Access",
+    "phGroupName": "e.g. Regional chapter",
+    "phShortName": "e.g. regional-chapter",
+    "phDescription": "Purpose of this group",
+    "accessPublic": "Open — anyone with the link",
+    "accessRestricted": "Restricted — invite required",
+    "creating": "Creating…",
+    "createSubmit": "Create group",
+    "createNeedName": "Please add a group name and short name for the link.",
+    "createSuccess": "Group created.",
+    "createSuccessInvite": "Group created. Save this invite code — we only show it once:\n{{invite}}\n\nShare this link with people you trust:\n{{link}}",
+    "directoryTitle": "Directory",
+    "directoryBody": "Open groups are listed below. Restricted groups require an invite from the organiser.",
+    "openAccess": "Open access",
+    "restrictedAccess": "Restricted access",
+    "badgeOpen": "Open",
+    "badgeRestricted": "Restricted",
+    "directoryEmpty": "No groups in the directory yet. Use Get started above, or create a group.",
+    "errors": {
+      "loadNetwork": "We couldn’t load the list. Use “Start here” above — that still works.",
+      "createNetwork": "We couldn’t reach the server. Check your connection and try again.",
+      "createGeneric": "Something went wrong. Try again."
+    }
+  },
+  "spaceActions": {
+    "actions": "Actions",
+    "open": "Open",
+    "shareSomething": "Share something",
+    "results": "Results",
+    "forHosts": "For hosts",
+    "inviteNote": "This group is invite-only. Open the link you were sent first, then come back here."
+  }
+}

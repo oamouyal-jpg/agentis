@@ -2,7 +2,7 @@
 
 Agentis is a civic intelligence platform:
 - People **submit public concerns**
-- Admin runs **AI clustering** to generate structured civic questions
+- **AI clustering** runs automatically after submissions to generate structured civic questions
 - People **vote yes/no**
 - The system produces **insights** over attention, controversy, and consensus
 
@@ -74,7 +74,7 @@ Legacy routes without a slug (`/questions`, `/submit`, `/vote`, `/insights`, `/a
 ## App flow
 
 1. Open `/` and pick a space (or use **open**).
-2. **Submit** concerns, then **Admin → Run Clustering**.
+2. **Submit** concerns (clustering runs in the background; refresh after a few seconds if needed).
 3. Open a question and vote **Yes/No**.
 4. **Insights** for aggregated signal in that space.
 

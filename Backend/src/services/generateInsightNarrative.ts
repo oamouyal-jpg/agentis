@@ -24,6 +24,14 @@ type InsightPayload = {
     questionCount: number;
     totalVotes: number;
   }>;
+  mindChanges?: {
+    total: number;
+    shareOfVoters: number;
+    yesToNo: number;
+    noToYes: number;
+    medianTimeLabel: string | null;
+    topQuestionTitle?: string;
+  };
 };
 
 const client =
@@ -66,6 +74,24 @@ function buildFallbackNarrative(data: InsightPayload) {
 
     parts.push(
       `At the cluster level, "${topCluster.title}" is generating the strongest concentration of attention, which may point to an emerging civic priority.`
+    );
+  }
+
+  const mc = data.mindChanges;
+  if (mc && mc.total > 0) {
+    const pct = Math.round(mc.shareOfVoters * 100);
+    const dir =
+      mc.yesToNo > mc.noToYes
+        ? "more often from Yes toward No"
+        : mc.noToYes > mc.yesToNo
+          ? "more often from No toward Yes"
+          : "evenly between Yes→No and No→Yes";
+    const timeBit =
+      mc.medianTimeLabel != null
+        ? ` The typical gap between someone’s first vote and their change was about ${mc.medianTimeLabel}.`
+        : "";
+    parts.push(
+      `${mc.total} participant${mc.total === 1 ? "" : "s"} used their one allowed vote change (${pct}% of current votes), with switches ${dir}.${timeBit}`
     );
   }
 

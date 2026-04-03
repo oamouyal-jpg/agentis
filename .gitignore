@@ -22,6 +22,9 @@ Backend/node_modules
 /build
 Backend/dist
 
+# local file-store data (do not commit)
+Backend/data/store.json
+
 # misc
 .DS_Store
 *.pem

@@ -2,7 +2,10 @@
 
 import Link from "next/link";
 import { use, useEffect, useState } from "react";
-import { spaceFetch } from "../../../lib/spaceApi";
+import { FollowGroupButton } from "../../components/FollowGroupButton";
+import { LanguageSwitcher } from "../../components/LanguageSwitcher";
+import { API_BASE } from "../../../lib/apiBase";
+import { getInviteForSpace, spaceFetch } from "../../../lib/spaceApi";
 
 type Question = {
   id: number;
@@ -14,7 +17,13 @@ type Question = {
   sourceSubmissionIds: number[];
   votesYes: number;
   votesNo: number;
+  imageUrl?: string;
   createdAt?: number;
+};
+
+type SpaceMeta = {
+  name?: string;
+  branding?: { logoUrl?: string; accentColor?: string };
 };
 
 export default function SpaceHomePage({
@@ -26,6 +35,45 @@ export default function SpaceHomePage({
   const [questions, setQuestions] = useState<Question[]>([]);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
+  const [spaceName, setSpaceName] = useState(slug);
+  const [dateLine, setDateLine] = useState("");
+  const [branding, setBranding] = useState<SpaceMeta["branding"]>(undefined);
+
+  useEffect(() => {
+    setDateLine(
+      new Intl.DateTimeFormat("en-GB", {
+        weekday: "long",
+        day: "numeric",
+        month: "long",
+        year: "numeric",
+      }).format(new Date())
+    );
+  }, []);
+
+  useEffect(() => {
+    async function loadMeta() {
+      try {
+        const headers = new Headers();
+        const inv = getInviteForSpace(slug);
+        if (inv) headers.set("X-Space-Invite", inv);
+        const res = await fetch(
+          `${API_BASE}/spaces/${encodeURIComponent(slug)}`,
+          { headers, cache: "no-store" }
+        );
+        if (!res.ok) return;
+        const data = (await res.json()) as SpaceMeta;
+        if (typeof data.name === "string" && data.name.trim()) {
+          setSpaceName(data.name.trim());
+        }
+        if (data.branding && typeof data.branding === "object") {
+          setBranding(data.branding);
+        }
+      } catch {
+        /* keep fallback */
+      }
+    }
+    loadMeta();
+  }, [slug]);
 
   useEffect(() => {
     async function loadQuestions() {
@@ -60,124 +108,162 @@ export default function SpaceHomePage({
   const base = `/s/${encodeURIComponent(slug)}`;
 
   return (
-    <main className="min-h-screen bg-slate-950 text-slate-100">
-      <header className="border-b border-slate-800 bg-slate-950/80 backdrop-blur">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-          <Link href="/" className="text-lg font-semibold tracking-tight text-white">
+    <main className="min-h-screen bg-zinc-950 text-zinc-100">
+      <header className="border-b border-zinc-800 bg-zinc-950/90 backdrop-blur-sm">
+        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 px-6 py-4 lg:px-10">
+          <Link
+            href="/"
+            className="font-display text-lg font-medium tracking-tight text-zinc-100"
+          >
             Agentis
           </Link>
 
-          <nav className="flex flex-wrap items-center gap-3">
+          <nav className="flex flex-wrap items-center gap-2">
             <Link
               href="/"
-              className="rounded-xl border border-slate-700 px-4 py-2 text-sm text-slate-300 hover:bg-slate-800"
-            >
-              Spaces
-            </Link>
-            <Link
-              href={base}
-              className="rounded-xl border border-cyan-500/40 bg-cyan-500/10 px-4 py-2 text-sm text-cyan-300"
+              className="rounded-md border border-zinc-700 px-3 py-1.5 text-xs font-medium text-zinc-400 transition hover:border-zinc-600 hover:bg-zinc-900 hover:text-zinc-200"
             >
               Home
             </Link>
             <Link
+              href="/my-groups"
+              className="rounded-md border border-zinc-700 px-3 py-1.5 text-xs font-medium text-zinc-400 transition hover:border-zinc-600 hover:bg-zinc-900 hover:text-zinc-200"
+            >
+              My groups
+            </Link>
+            <FollowGroupButton slug={slug} name={spaceName} />
+            <Link
+              href="/"
+              className="rounded-md border border-zinc-700 px-3 py-1.5 text-xs font-medium text-zinc-400 transition hover:border-zinc-600 hover:bg-zinc-900 hover:text-zinc-200"
+            >
+              Directory
+            </Link>
+            <Link
+              href={base}
+              className="rounded-md border border-zinc-600 bg-zinc-900 px-3 py-1.5 text-xs font-medium text-zinc-200"
+            >
+              Overview
+            </Link>
+            <Link
               href={`${base}/submit`}
-              className="rounded-xl border border-slate-700 px-4 py-2 text-sm text-slate-300 hover:bg-slate-800"
+              className="rounded-md border border-zinc-700 px-3 py-1.5 text-xs font-medium text-zinc-400 transition hover:border-zinc-600 hover:bg-zinc-900 hover:text-zinc-200"
             >
               Submit
             </Link>
             <Link
               href={`${base}/admin`}
-              className="rounded-xl border border-slate-700 px-4 py-2 text-sm text-slate-300 hover:bg-slate-800"
+              className="rounded-md border border-zinc-700 px-3 py-1.5 text-xs font-medium text-zinc-400 transition hover:border-zinc-600 hover:bg-zinc-900 hover:text-zinc-200"
             >
               Admin
             </Link>
             <Link
               href={`${base}/insights`}
-              className="rounded-xl border border-slate-700 px-4 py-2 text-sm text-slate-300 hover:bg-slate-800"
+              className="rounded-md border border-zinc-700 px-3 py-1.5 text-xs font-medium text-zinc-400 transition hover:border-zinc-600 hover:bg-zinc-900 hover:text-zinc-200"
             >
               Insights
             </Link>
+            <LanguageSwitcher />
           </nav>
         </div>
       </header>
 
-      <section className="mx-auto max-w-6xl px-6 py-12">
-        <div className="mb-6 rounded-2xl border border-slate-800 bg-slate-900/50 px-4 py-3 text-sm text-slate-400">
-          Space: <span className="font-medium text-slate-200">{slug}</span>
+      <section className="mx-auto max-w-6xl px-6 py-12 lg:px-10">
+        <div className="mb-10 flex flex-col gap-1 border-b border-zinc-800 pb-6 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-zinc-500">
+              Group
+            </p>
+            <p className="mt-1 font-mono text-[11px] text-zinc-600">
+              {slug}
+            </p>
+          </div>
+          <p className="font-mono text-[11px] text-zinc-600">{dateLine || "—"}</p>
         </div>
 
-        <div className="mb-10 rounded-3xl border border-slate-800 bg-slate-900/70 p-8 shadow-2xl">
-          <div className="mb-4 inline-flex rounded-full border border-cyan-500/30 bg-cyan-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-cyan-300">
-            Civic Intelligence Platform
+        <div className="mb-12 border-b border-zinc-800 pb-12">
+          <div className="flex flex-wrap items-center gap-4">
+            {branding?.logoUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element -- org logos can be on any host (https only)
+              <img
+                src={branding.logoUrl}
+                alt=""
+                className="h-12 w-12 rounded-md border border-zinc-800 bg-zinc-950 object-contain p-1"
+              />
+            ) : null}
+            <h1
+              className="font-display text-3xl font-medium tracking-tight text-zinc-50 sm:text-4xl md:text-[2.4rem] md:leading-tight"
+              style={
+                branding?.accentColor ? { color: branding.accentColor } : undefined
+              }
+            >
+              {spaceName}
+            </h1>
           </div>
 
-          <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">
-            Agentis
-          </h1>
-
-          <p className="mt-4 max-w-3xl text-base leading-7 text-slate-300 sm:text-lg">
-            Concerns from this group are clustered into clearer questions people
-            can vote on — signal from the crowd, not a fixed agenda.
+          <p className="mt-4 max-w-2xl text-sm leading-relaxed text-zinc-400 sm:text-[15px]">
+            These are live questions for this group. Open one to read context and vote.
           </p>
 
-          <div className="mt-8 grid gap-4 sm:grid-cols-3">
-            <div className="rounded-2xl border border-slate-800 bg-slate-950/60 p-4">
-              <p className="text-sm text-slate-400">Active Questions</p>
-              <p className="mt-2 text-3xl font-semibold">{questions.length}</p>
-            </div>
-
-            <div className="rounded-2xl border border-slate-800 bg-slate-950/60 p-4">
-              <p className="text-sm text-slate-400">Status</p>
-              <p className="mt-2 text-lg font-medium text-emerald-300">
-                {loading ? "Loading..." : "Live"}
+          <div className="mt-10 grid gap-4 sm:grid-cols-3">
+            <div className="rounded-lg border border-zinc-800 bg-zinc-900/40 p-5">
+              <p className="text-xs font-medium text-zinc-500">Active questions</p>
+              <p className="mt-2 text-2xl font-semibold tabular-nums text-zinc-50">
+                {questions.length}
               </p>
             </div>
 
-            <div className="rounded-2xl border border-slate-800 bg-slate-950/60 p-4">
-              <p className="text-sm text-slate-400">Scope</p>
-              <p className="mt-2 text-lg font-medium text-slate-200">
-                This space only
+            <div className="rounded-lg border border-zinc-800 bg-zinc-900/40 p-5">
+              <p className="text-xs font-medium text-zinc-500">Status</p>
+              <p className="mt-2 text-sm font-medium text-zinc-300">
+                {loading ? "Loading…" : "Active"}
+              </p>
+            </div>
+
+            <div className="rounded-lg border border-zinc-800 bg-zinc-900/40 p-5">
+              <p className="text-xs font-medium text-zinc-500">Scope</p>
+              <p className="mt-2 text-sm font-medium text-zinc-300">
+                This group only
               </p>
             </div>
           </div>
         </div>
 
-        <div className="mb-6">
-          <h2 className="text-2xl font-semibold tracking-tight">
-            Active Questions
+        <div className="mb-8">
+          <h2 className="font-display text-xl font-medium text-zinc-50">
+            Issues &amp; votes
           </h2>
-          <p className="mt-1 text-sm text-slate-400">
-            Click a question to open it and vote.
+          <p className="mt-1 text-sm text-zinc-500">
+            Click a question to read and vote.
           </p>
         </div>
 
         {error && (
-          <div className="mb-6 rounded-2xl border border-red-500/30 bg-red-500/10 p-4 text-sm text-red-200">
+          <div className="mb-6 rounded-md border border-red-900/50 bg-red-950/30 p-4 text-sm text-red-200/90">
             {error}
           </div>
         )}
 
         {loading ? (
-          <div className="grid gap-6">
+          <div className="grid gap-4">
             {[1, 2, 3].map((item) => (
               <div
                 key={item}
-                className="animate-pulse rounded-3xl border border-slate-800 bg-slate-900/60 p-6"
+                className="animate-pulse rounded-lg border border-zinc-800 bg-zinc-900/40 p-6"
               >
-                <div className="h-6 w-2/3 rounded bg-slate-800" />
-                <div className="mt-4 h-4 w-full rounded bg-slate-800" />
-                <div className="mt-2 h-4 w-5/6 rounded bg-slate-800" />
+                <div className="h-5 w-1/3 rounded bg-zinc-800" />
+                <div className="mt-4 h-4 w-full rounded bg-zinc-800" />
+                <div className="mt-2 h-4 w-4/5 rounded bg-zinc-800" />
               </div>
             ))}
           </div>
         ) : questions.length === 0 ? (
-          <div className="rounded-3xl border border-dashed border-slate-700 bg-slate-900/40 p-10 text-center">
-            <h3 className="text-xl font-semibold text-slate-200">
-              No active questions yet
+          <div className="rounded-lg border border-dashed border-zinc-800 bg-zinc-950/50 px-8 py-12 text-center">
+            <h3 className="text-base font-semibold text-zinc-200">
+              No questions yet
             </h3>
-            <p className="mt-3 text-slate-400">
-              Submit concerns, then run clustering in Admin to generate questions.
+            <p className="mt-2 text-sm text-zinc-500">
+              Submit concerns from members — questions are generated automatically
+              shortly after. Use Admin to add artwork to each issue.
             </p>
           </div>
         ) : (
@@ -186,46 +272,65 @@ export default function SpaceHomePage({
               <Link
                 key={q.id}
                 href={`${base}/questions/${q.id}`}
-                className="block"
+                className="group block"
               >
-                <article className="rounded-3xl border border-slate-800 bg-slate-900/70 p-6 shadow-xl transition duration-200 hover:border-slate-700 hover:bg-slate-900">
-                  <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-                    <div className="max-w-3xl">
-                      <div className="mb-3 inline-flex rounded-full border border-violet-500/30 bg-violet-500/10 px-3 py-1 text-xs font-medium text-violet-300">
-                        {q.clusterId}
-                      </div>
-
-                      <h3 className="text-2xl font-semibold leading-tight text-white">
-                        {q.title}
-                      </h3>
-
-                      <p className="mt-3 text-slate-300">{q.description}</p>
+                <article className="overflow-hidden rounded-sm border border-zinc-800 bg-zinc-900/30 transition hover:border-zinc-600">
+                  <div className="grid md:grid-cols-12">
+                    <div className="relative aspect-[16/10] bg-zinc-900 md:col-span-5 md:aspect-auto md:min-h-[220px]">
+                      {q.imageUrl ? (
+                        // eslint-disable-next-line @next/next/no-img-element -- https URLs from admin (any host)
+                        <img
+                          src={q.imageUrl}
+                          alt=""
+                          className="absolute inset-0 h-full w-full object-cover transition duration-300 group-hover:brightness-110"
+                        />
+                      ) : (
+                        <div className="flex h-full min-h-[160px] flex-col items-center justify-center gap-2 px-6 text-center md:min-h-0">
+                          <span className="text-[10px] font-medium uppercase tracking-wider text-zinc-600">
+                            No artwork
+                          </span>
+                          <span className="max-w-[12rem] text-[11px] leading-snug text-zinc-600">
+                            Add an https image URL in Admin to show a visual for
+                            this issue.
+                          </span>
+                        </div>
+                      )}
                     </div>
-
-                    <div className="min-w-[220px] rounded-2xl border border-slate-800 bg-slate-950/60 p-4">
-                      <p className="text-sm text-slate-400">Live Votes</p>
-                      <div className="mt-3 flex items-center gap-6">
-                        <div>
-                          <p className="text-xs uppercase tracking-wide text-emerald-300">
-                            Yes
-                          </p>
-                          <p className="text-2xl font-bold text-white">
-                            {q.votesYes}
-                          </p>
-                        </div>
-                        <div>
-                          <p className="text-xs uppercase tracking-wide text-rose-300">
-                            No
-                          </p>
-                          <p className="text-2xl font-bold text-white">
-                            {q.votesNo}
-                          </p>
-                        </div>
+                    <div className="flex flex-col justify-between p-6 md:col-span-7">
+                      <div>
+                        <p className="font-mono text-[10px] text-zinc-600">
+                          {q.clusterId}
+                        </p>
+                        <h3 className="font-display mt-2 text-xl font-medium leading-snug text-zinc-50 sm:text-2xl">
+                          {q.title}
+                        </h3>
+                        <p className="mt-3 line-clamp-3 text-sm leading-relaxed text-zinc-400">
+                          {q.description}
+                        </p>
                       </div>
-
-                      <p className="mt-4 text-xs text-slate-500">
-                        Source submissions: {q.sourceSubmissionIds.length}
-                      </p>
+                      <div className="mt-6 flex flex-wrap items-end justify-between gap-4 border-t border-zinc-800/80 pt-5">
+                        <div className="flex gap-10">
+                          <div>
+                            <p className="text-[10px] font-medium uppercase tracking-wide text-zinc-500">
+                              Yes
+                            </p>
+                            <p className="font-display text-2xl font-medium tabular-nums text-zinc-100">
+                              {q.votesYes}
+                            </p>
+                          </div>
+                          <div>
+                            <p className="text-[10px] font-medium uppercase tracking-wide text-zinc-500">
+                              No
+                            </p>
+                            <p className="font-display text-2xl font-medium tabular-nums text-zinc-100">
+                              {q.votesNo}
+                            </p>
+                          </div>
+                        </div>
+                        <p className="text-[10px] text-zinc-600">
+                          {q.sourceSubmissionIds.length} source inputs
+                        </p>
+                      </div>
                     </div>
                   </div>
                 </article>
