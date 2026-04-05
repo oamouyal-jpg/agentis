@@ -5,6 +5,7 @@ import {
   Noto_Sans,
 } from "next/font/google";
 import type { ReactNode } from "react";
+import { InstallBanner } from "./components/InstallBanner";
 import { RegisterSW } from "./components/RegisterSW";
 import { I18nProvider } from "../lib/i18n/I18nProvider";
 import "./globals.css";
@@ -70,6 +71,7 @@ export default function RootLayout({
       >
         <RegisterSW />
         <I18nProvider>{children}</I18nProvider>
+        <InstallBanner />
       </body>
     </html>
   );
