@@ -8,44 +8,36 @@ Agentis is a civic intelligence platform:
 
 ## Local development
 
-### Backend (Express, port 4000)
+### Combined server (recommended)
 
 ```bash
-cd Backend
 npm install
-cp .env.example .env
-npm run dev
-```
-
-Backend runs at `http://localhost:4000`.
-
-### Frontend (Next.js, port 3000)
-
-```bash
-cd ..
-npm install
+cd Backend && npm install && cd ..
 cp .env.example .env.local
-npm run dev
+npm run build:backend
+node server.js
 ```
 
-Frontend runs at `http://localhost:3000`.
+App runs at `http://localhost:3000` — pages and API on the same URL (API under `/api`).
+
+### Separate servers (alternative)
+
+```bash
+cd Backend && npm install && npm run dev   # API on :4000
+cd .. && npm install && npm run dev        # Next.js on :3000
+```
+
+Set `NEXT_PUBLIC_API_BASE_URL=http://localhost:4000` in `.env.local` if using separate servers.
 
 ## Deploy to Render
 
-This repo includes a Render Blueprint (`render.yaml`) that creates two web services:
-- **agentis-backend** (Express API)
-- **agentis-frontend** (Next.js app)
+This repo includes a Render Blueprint (`render.yaml`) that creates **one** web service:
+- **agentis** — Express API + Next.js, same process, same URL
 
 ### Render env vars to set
 
-On the **backend** service:
-- `OPENAI_API_KEY`: (optional) enables narrative generation for `/insights`
-- `CORS_ORIGINS`: comma-separated list of allowed frontend origins
-  - Example: `https://agentis-frontend.onrender.com`
-
-On the **frontend** service:
-- `NEXT_PUBLIC_API_BASE_URL`: the backend base URL
-  - Example: `https://agentis-backend.onrender.com`
+- `OPENAI_API_KEY`: (optional) enables AI narrative generation for `/insights`
+- `NEXT_PUBLIC_SITE_URL`: your production URL (for share links / OG metadata)
 
 ## Spaces (Phase 1)
 

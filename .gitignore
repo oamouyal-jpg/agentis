@@ -24,6 +24,7 @@ Backend/dist
 
 # local file-store data (do not commit)
 Backend/data/store.json
+data/
 
 # misc
 .DS_Store
