@@ -111,114 +111,91 @@ export default function SpaceHomePage({
   return (
     <main className="min-h-screen bg-zinc-950 text-zinc-100">
       <header className="border-b border-zinc-800 bg-zinc-950/90 backdrop-blur-sm">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4 lg:px-10">
-          <Link
-            href="/"
-            className="font-display text-lg font-medium tracking-tight text-zinc-100"
-          >
-            Agentis
-          </Link>
-
-          <div className="flex items-center gap-2">
-            <ShareButton title={spaceName} text={`Join ${spaceName} on Agentis`} />
-            <Link
-              href={`${base}/submit`}
-              className="rounded-md border border-zinc-700 px-3 py-1.5 text-xs font-medium text-zinc-400 transition hover:border-zinc-600 hover:bg-zinc-900 hover:text-zinc-200"
-            >
-              Submit
-            </Link>
-            <LanguageSwitcher />
-          </div>
-        </div>
-      </header>
-
-      <section className="mx-auto max-w-6xl px-6 py-12 lg:px-10">
-        <div className="mb-10 border-b border-zinc-800 pb-6">
-          <div className="flex flex-wrap items-center gap-4">
+        <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3 sm:px-6 lg:px-10">
+          <div className="flex items-center gap-3">
             {branding?.logoUrl ? (
               // eslint-disable-next-line @next/next/no-img-element -- org logos can be on any host (https only)
               <img
                 src={branding.logoUrl}
                 alt=""
-                className="h-12 w-12 rounded-md border border-zinc-800 bg-zinc-950 object-contain p-1"
+                className="h-7 w-7 rounded border border-zinc-800 bg-zinc-950 object-contain"
               />
             ) : null}
-            <div>
-              <h1
-                className="font-display text-3xl font-medium tracking-tight text-zinc-50 sm:text-4xl"
-                style={
-                  branding?.accentColor ? { color: branding.accentColor } : undefined
-                }
-              >
-                {spaceName}
-              </h1>
-              <p className="mt-1 font-mono text-[11px] text-zinc-600">
-                {dateLine || "—"}
-              </p>
-            </div>
+            <Link
+              href="/"
+              className="font-display text-base font-medium tracking-tight text-zinc-100 sm:text-lg"
+            >
+              Agentis
+            </Link>
+            <span className="hidden text-zinc-700 sm:inline">/</span>
+            <h1
+              className="hidden text-sm font-medium text-zinc-400 sm:inline"
+              style={
+                branding?.accentColor ? { color: branding.accentColor } : undefined
+              }
+            >
+              {spaceName}
+            </h1>
           </div>
 
-          <p className="mt-4 max-w-2xl text-sm leading-relaxed text-zinc-400 sm:text-[15px]">
-            These are live questions for this group. Open one to read context and vote.
-          </p>
-
-          <div className="mt-6 flex flex-wrap items-center gap-2">
-            <FollowGroupButton slug={slug} name={spaceName} />
+          <nav className="flex items-center gap-1.5 sm:gap-2">
             <Link
               href={`${base}/submit`}
-              className="rounded-md border border-zinc-700 px-3 py-1.5 text-xs font-medium text-zinc-400 transition hover:border-zinc-600 hover:bg-zinc-900 hover:text-zinc-200"
+              className="rounded-md px-2.5 py-1 text-[11px] font-medium text-zinc-400 transition hover:bg-zinc-800 hover:text-zinc-200 sm:text-xs"
             >
-              Raise your voice
+              Submit
             </Link>
             <Link
               href={`${base}/insights`}
-              className="rounded-md border border-zinc-700 px-3 py-1.5 text-xs font-medium text-zinc-400 transition hover:border-zinc-600 hover:bg-zinc-900 hover:text-zinc-200"
+              className="hidden rounded-md px-2.5 py-1 text-xs font-medium text-zinc-400 transition hover:bg-zinc-800 hover:text-zinc-200 sm:inline-flex"
             >
               Insights
             </Link>
             <Link
               href="/my-groups"
-              className="rounded-md border border-zinc-700 px-3 py-1.5 text-xs font-medium text-zinc-400 transition hover:border-zinc-600 hover:bg-zinc-900 hover:text-zinc-200"
+              className="hidden rounded-md px-2.5 py-1 text-xs font-medium text-zinc-400 transition hover:bg-zinc-800 hover:text-zinc-200 sm:inline-flex"
+            >
+              My groups
+            </Link>
+            <ShareButton title={spaceName} text={`Join ${spaceName} on Agentis`} className="px-2.5 py-1 text-[11px] sm:text-xs" />
+            <LanguageSwitcher />
+          </nav>
+        </div>
+      </header>
+
+      <section className="mx-auto max-w-6xl px-4 py-6 sm:px-6 sm:py-10 lg:px-10">
+        <div className="mb-6 sm:mb-8">
+          <h1
+            className="font-display text-xl font-medium tracking-tight text-zinc-50 sm:hidden"
+            style={
+              branding?.accentColor ? { color: branding.accentColor } : undefined
+            }
+          >
+            {spaceName}
+          </h1>
+          <p className="mt-1 text-sm text-zinc-500 sm:mt-0">
+            {questions.length} question{questions.length !== 1 ? "s" : ""} &middot; {dateLine || "—"}
+          </p>
+
+          <div className="mt-3 flex flex-wrap items-center gap-1.5">
+            <FollowGroupButton slug={slug} name={spaceName} />
+            <Link
+              href={`${base}/insights`}
+              className="rounded-md px-2.5 py-1 text-[11px] font-medium text-zinc-500 transition hover:bg-zinc-800 hover:text-zinc-200 sm:hidden"
+            >
+              Insights
+            </Link>
+            <Link
+              href="/my-groups"
+              className="rounded-md px-2.5 py-1 text-[11px] font-medium text-zinc-500 transition hover:bg-zinc-800 hover:text-zinc-200 sm:hidden"
             >
               My groups
             </Link>
             <Link
               href={`${base}/admin`}
-              className="rounded-md border border-zinc-700 px-3 py-1.5 text-xs font-medium text-zinc-400 transition hover:border-zinc-600 hover:bg-zinc-900 hover:text-zinc-200"
+              className="rounded-md px-2.5 py-1 text-[11px] font-medium text-zinc-500 transition hover:bg-zinc-800 hover:text-zinc-200"
             >
               Admin
-            </Link>
-          </div>
-
-          <div className="mt-8 grid gap-3 sm:grid-cols-3">
-            <Link
-              href="#questions"
-              className="group rounded-lg border border-zinc-800 bg-zinc-900/40 p-5 transition hover:border-zinc-700 hover:bg-zinc-900/70"
-            >
-              <p className="text-xs font-medium text-zinc-500 group-hover:text-zinc-400">Active questions</p>
-              <p className="mt-2 text-2xl font-semibold tabular-nums text-zinc-50">
-                {questions.length}
-              </p>
-            </Link>
-
-            <Link
-              href={`${base}/insights`}
-              className="group rounded-lg border border-zinc-800 bg-zinc-900/40 p-5 transition hover:border-zinc-700 hover:bg-zinc-900/70"
-            >
-              <p className="text-xs font-medium text-zinc-500 group-hover:text-zinc-400">Insights</p>
-              <p className="mt-2 text-sm font-medium text-zinc-300">
-                View analysis &rarr;
-              </p>
-            </Link>
-
-            <Link
-              href={`${base}/submit`}
-              className="group rounded-lg border border-zinc-800 bg-zinc-900/40 p-5 transition hover:border-zinc-700 hover:bg-zinc-900/70"
-            >
-              <p className="text-xs font-medium text-zinc-500 group-hover:text-zinc-400">Raise your voice</p>
-              <p className="mt-2 text-sm font-medium text-zinc-300">
-                Submit a concern &rarr;
-              </p>
             </Link>
           </div>
         </div>

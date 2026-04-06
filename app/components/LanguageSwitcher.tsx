@@ -20,7 +20,7 @@ export function LanguageSwitcher() {
     <select
       value={locale}
       onChange={(e) => setLocale(e.target.value as AppLocale)}
-      className="rounded-md border border-zinc-700 bg-zinc-900 px-2 py-1.5 font-mono text-xs font-medium text-zinc-300 outline-none transition hover:border-zinc-600 hover:text-zinc-100"
+      className="w-14 rounded-md border border-zinc-700 bg-zinc-900 px-1 py-1 text-center font-mono text-[11px] font-medium text-zinc-400 outline-none transition hover:border-zinc-600 hover:text-zinc-100 sm:w-auto sm:px-2 sm:py-1.5 sm:text-left sm:text-xs"
       aria-label="Language"
     >
       {locales.map((loc) => (
