@@ -190,8 +190,8 @@ export function PressDeskHero({
               sizes="(max-width: 1024px) 100vw, 58vw"
               priority
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-zinc-950/90 via-zinc-950/20 to-transparent" />
-            <p className="absolute bottom-4 start-4 end-4 font-mono text-[10px] leading-relaxed text-zinc-400">
+            <div className="absolute inset-0 bg-gradient-to-t from-zinc-950/95 via-zinc-950/30 to-transparent" />
+            <p className="absolute bottom-5 start-5 end-5 text-sm font-medium leading-snug text-zinc-100 sm:text-base sm:leading-relaxed">
               {t("hero.leadCaption")}
             </p>
           </div>
