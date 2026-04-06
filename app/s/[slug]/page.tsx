@@ -149,20 +149,38 @@ export default function SpaceHomePage({
         </div>
       </header>
 
-      <section className="mx-auto max-w-6xl px-4 py-6 sm:px-6 sm:py-10 lg:px-10">
-        <div className="mb-6 sm:mb-8">
-          <div className="flex flex-wrap items-center gap-2">
+      <section className="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-12 lg:px-10">
+        <div className="mb-10 border-b border-zinc-800 pb-8">
+          <h2
+            className="font-display text-2xl font-medium tracking-tight text-zinc-50 sm:text-3xl"
+            style={
+              branding?.accentColor ? { color: branding.accentColor } : undefined
+            }
+          >
+            {spaceName}
+          </h2>
+          <p className="mt-2 text-sm text-zinc-500">
+            {questions.length} question{questions.length !== 1 ? "s" : ""} &middot; {dateLine || "—"}
+          </p>
+          <p className="mt-3 max-w-2xl text-sm leading-relaxed text-zinc-400">
+            These are live questions for this group. Open one to read context and vote.
+          </p>
+
+          <div className="mt-5 flex flex-wrap items-center gap-2">
             <FollowGroupButton slug={slug} name={spaceName} />
-            <span className="text-sm text-zinc-500">
-              {questions.length} question{questions.length !== 1 ? "s" : ""} &middot; {dateLine || "—"}
-            </span>
+            <Link
+              href={`${base}/submit`}
+              className="inline-flex items-center rounded-md bg-zinc-100 px-4 py-2 text-sm font-medium text-zinc-900 transition hover:bg-white"
+            >
+              Raise your voice
+            </Link>
           </div>
         </div>
 
-        <div id="questions" className="mb-8 scroll-mt-24">
-          <h2 className="font-display text-xl font-medium text-zinc-50">
+        <div id="questions" className="mb-6 scroll-mt-24">
+          <h3 className="font-display text-lg font-medium text-zinc-50">
             Issues &amp; votes
-          </h2>
+          </h3>
           <p className="mt-1 text-sm text-zinc-500">
             Click a question to read and vote.
           </p>
