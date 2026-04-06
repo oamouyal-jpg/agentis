@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { ShareButton } from "../components/ShareButton";
 import { API_BASE } from "../../lib/apiBase";
 
 export default function SubmitPage() {
@@ -78,6 +79,7 @@ export default function SubmitPage() {
             >
               Insights
             </Link>
+            <ShareButton text="Share your concern on Agentis" />
           </nav>
         </div>
       </header>

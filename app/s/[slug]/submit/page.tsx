@@ -3,6 +3,7 @@
 import Link from "next/link";
 import type { FormEvent } from "react";
 import { use, useState } from "react";
+import { ShareButton } from "../../../components/ShareButton";
 import { spaceFetch } from "../../../../lib/spaceApi";
 
 export default function SpaceSubmitPage({
@@ -97,6 +98,7 @@ export default function SpaceSubmitPage({
             >
               Insights
             </Link>
+            <ShareButton text="Share your concern on Agentis" />
           </nav>
         </div>
       </header>

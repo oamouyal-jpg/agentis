@@ -4,6 +4,7 @@ import Link from "next/link";
 import { use, useEffect, useState } from "react";
 import { FollowGroupButton } from "../../components/FollowGroupButton";
 import { LanguageSwitcher } from "../../components/LanguageSwitcher";
+import { ShareButton } from "../../components/ShareButton";
 import { API_BASE } from "../../../lib/apiBase";
 import { getInviteForSpace, spaceFetch } from "../../../lib/spaceApi";
 
@@ -162,6 +163,7 @@ export default function SpaceHomePage({
             >
               Insights
             </Link>
+            <ShareButton title={spaceName} text={`Join ${spaceName} on Agentis`} />
             <LanguageSwitcher />
           </nav>
         </div>
