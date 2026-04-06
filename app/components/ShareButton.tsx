@@ -41,7 +41,7 @@ export function ShareButton({
   return (
     <button
       onClick={handleShare}
-      className={`inline-flex items-center gap-1.5 rounded-md border border-zinc-700 px-3 py-1.5 text-xs font-medium text-zinc-400 transition hover:border-zinc-600 hover:bg-zinc-900 hover:text-zinc-200 ${className}`}
+      className={`inline-flex items-center gap-1.5 rounded-md bg-zinc-100 px-4 py-1.5 text-xs font-semibold text-zinc-900 transition hover:bg-white ${className}`}
     >
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -51,7 +51,7 @@ export function ShareButton({
       >
         <path d="M13 4.5a2.5 2.5 0 1 1 .702 1.737L6.97 9.604a2.5 2.5 0 0 1 0 .792l6.733 3.367a2.5 2.5 0 1 1-.671 1.341l-6.733-3.367a2.5 2.5 0 1 1 0-3.474l6.733-3.367A2.5 2.5 0 0 1 13 4.5Z" />
       </svg>
-      {copied ? "Link copied!" : "Share"}
+      {copied ? "Copied!" : "Share"}
     </button>
   );
 }
