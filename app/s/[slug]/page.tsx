@@ -111,7 +111,7 @@ export default function SpaceHomePage({
   return (
     <main className="min-h-screen bg-zinc-950 text-zinc-100">
       <header className="border-b border-zinc-800 bg-zinc-950/90 backdrop-blur-sm">
-        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 px-6 py-4 lg:px-10">
+        <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-6 py-4 lg:px-10">
           <div className="flex items-center gap-3">
             <Link
               href="/"
@@ -119,21 +119,14 @@ export default function SpaceHomePage({
             >
               Agentis
             </Link>
-            <Link
-              href="/my-groups"
-              className="rounded-md border border-zinc-700 px-3 py-1.5 text-xs font-medium text-zinc-400 transition hover:border-zinc-600 hover:bg-zinc-900 hover:text-zinc-200"
-            >
-              My groups
-            </Link>
           </div>
 
-          <nav className="flex flex-wrap items-center gap-2">
-            <FollowGroupButton slug={slug} name={spaceName} />
+          <nav className="flex items-center gap-2">
             <Link
-              href={base}
-              className="rounded-md border border-zinc-600 bg-zinc-900 px-3 py-1.5 text-xs font-medium text-zinc-200"
+              href="/my-groups"
+              className="hidden sm:inline-flex rounded-md border border-zinc-700 px-3 py-1.5 text-xs font-medium text-zinc-400 transition hover:border-zinc-600 hover:bg-zinc-900 hover:text-zinc-200"
             >
-              Overview
+              My groups
             </Link>
             <Link
               href={`${base}/submit`}
@@ -142,14 +135,8 @@ export default function SpaceHomePage({
               Submit
             </Link>
             <Link
-              href={`${base}/admin`}
-              className="rounded-md border border-zinc-700 px-3 py-1.5 text-xs font-medium text-zinc-400 transition hover:border-zinc-600 hover:bg-zinc-900 hover:text-zinc-200"
-            >
-              Admin
-            </Link>
-            <Link
               href={`${base}/insights`}
-              className="rounded-md border border-zinc-700 px-3 py-1.5 text-xs font-medium text-zinc-400 transition hover:border-zinc-600 hover:bg-zinc-900 hover:text-zinc-200"
+              className="hidden sm:inline-flex rounded-md border border-zinc-700 px-3 py-1.5 text-xs font-medium text-zinc-400 transition hover:border-zinc-600 hover:bg-zinc-900 hover:text-zinc-200"
             >
               Insights
             </Link>
@@ -195,6 +182,28 @@ export default function SpaceHomePage({
           <p className="mt-4 max-w-2xl text-sm leading-relaxed text-zinc-400 sm:text-[15px]">
             These are live questions for this group. Open one to read context and vote.
           </p>
+
+          <div className="mt-6 flex flex-wrap items-center gap-2">
+            <FollowGroupButton slug={slug} name={spaceName} />
+            <Link
+              href={`${base}/admin`}
+              className="rounded-md border border-zinc-700 px-3 py-1.5 text-xs font-medium text-zinc-400 transition hover:border-zinc-600 hover:bg-zinc-900 hover:text-zinc-200"
+            >
+              Admin
+            </Link>
+            <Link
+              href="/my-groups"
+              className="sm:hidden rounded-md border border-zinc-700 px-3 py-1.5 text-xs font-medium text-zinc-400 transition hover:border-zinc-600 hover:bg-zinc-900 hover:text-zinc-200"
+            >
+              My groups
+            </Link>
+            <Link
+              href={`${base}/insights`}
+              className="sm:hidden rounded-md border border-zinc-700 px-3 py-1.5 text-xs font-medium text-zinc-400 transition hover:border-zinc-600 hover:bg-zinc-900 hover:text-zinc-200"
+            >
+              Insights
+            </Link>
+          </div>
 
           <div className="mt-10 grid gap-4 sm:grid-cols-3">
             <div className="rounded-lg border border-zinc-800 bg-zinc-900/40 p-5">
