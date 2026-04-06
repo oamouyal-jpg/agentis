@@ -275,62 +275,24 @@ export default function SpaceAdminPage({
   return (
     <main className="min-h-screen bg-zinc-950 text-zinc-100">
       <header className="border-b border-zinc-800 bg-zinc-950/90 backdrop-blur-sm">
-        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 px-6 py-4 lg:px-10">
+        <div className="mx-auto max-w-6xl px-4 py-3 sm:px-6 lg:px-10">
           <Link
             href="/"
-            className="font-display text-lg font-medium tracking-tight text-zinc-100"
+            className="font-display text-base font-medium tracking-tight text-zinc-100"
           >
             Agentis
           </Link>
-
-          <nav className="flex flex-wrap items-center gap-2">
-            <Link
-              href="/"
-              className="rounded-md border border-zinc-700 px-3 py-1.5 text-xs font-medium text-zinc-400 transition hover:bg-zinc-900 hover:text-zinc-200"
-            >
-              Home
-            </Link>
-            <Link
-              href="/"
-              className="rounded-md border border-zinc-700 px-3 py-1.5 text-xs font-medium text-zinc-400 transition hover:bg-zinc-900 hover:text-zinc-200"
-            >
-              Directory
-            </Link>
-            <Link
-              href={base}
-              className="rounded-md border border-zinc-700 px-3 py-1.5 text-xs font-medium text-zinc-400 transition hover:bg-zinc-900 hover:text-zinc-200"
-            >
-              Overview
-            </Link>
-            <Link
-              href={`${base}/submit`}
-              className="rounded-md border border-zinc-700 px-3 py-1.5 text-xs font-medium text-zinc-400 transition hover:bg-zinc-900 hover:text-zinc-200"
-            >
-              Submit
-            </Link>
-            <Link
-              href={`${base}/admin`}
-              className="rounded-md border border-zinc-600 bg-zinc-900 px-3 py-1.5 text-xs font-medium text-zinc-200"
-            >
-              Admin
-            </Link>
-            <Link
-              href={`${base}/insights`}
-              className="rounded-md border border-zinc-700 px-3 py-1.5 text-xs font-medium text-zinc-400 transition hover:bg-zinc-900 hover:text-zinc-200"
-            >
-              Insights
-            </Link>
-            <Link
-              href={`${base}/petitions`}
-              className="rounded-md border border-zinc-700 px-3 py-1.5 text-xs font-medium text-zinc-400 transition hover:bg-zinc-900 hover:text-zinc-200"
-            >
-              Petitions
-            </Link>
+          <nav className="mt-2 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[11px] sm:gap-x-3 sm:text-xs">
+            <Link href={base} className="font-medium text-zinc-400 transition hover:text-zinc-100">Overview</Link>
+            <Link href={`${base}/submit`} className="font-medium text-zinc-400 transition hover:text-zinc-100">Submit</Link>
+            <Link href={`${base}/admin`} className="font-medium text-zinc-200">Admin</Link>
+            <Link href={`${base}/insights`} className="font-medium text-zinc-400 transition hover:text-zinc-100">Insights</Link>
+            <Link href={`${base}/petitions`} className="font-medium text-zinc-400 transition hover:text-zinc-100">Petitions</Link>
           </nav>
         </div>
       </header>
 
-      <section className="mx-auto max-w-6xl px-6 py-12 lg:px-10">
+      <section className="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-12 lg:px-10">
         <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-zinc-500">
           Admin · {slug}
         </p>

@@ -138,11 +138,11 @@ export default function SpaceHomePage({
             </h1>
           </div>
 
-          <nav className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] sm:text-xs">
+          <nav className="mt-2 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[11px] sm:gap-x-3 sm:text-xs">
             <Link href={`${base}/submit`} className="font-medium text-zinc-400 transition hover:text-zinc-100">Submit</Link>
             <Link href={`${base}/insights`} className="font-medium text-zinc-400 transition hover:text-zinc-100">Insights</Link>
-            <Link href="/my-groups" className="font-medium text-zinc-400 transition hover:text-zinc-100">My groups</Link>
-            <Link href={`${base}/admin`} className="font-medium text-zinc-400 transition hover:text-zinc-100">Admin</Link>
+            <Link href="/my-groups" className="hidden font-medium text-zinc-400 transition hover:text-zinc-100 sm:inline">My groups</Link>
+            <Link href={`${base}/admin`} className="hidden font-medium text-zinc-400 transition hover:text-zinc-100 sm:inline">Admin</Link>
             <ShareButton title={spaceName} text={`Join ${spaceName} on Agentis`} />
             <LanguageSwitcher />
           </nav>
@@ -173,6 +173,18 @@ export default function SpaceHomePage({
               className="inline-flex items-center rounded-md bg-zinc-100 px-4 py-2 text-sm font-medium text-zinc-900 transition hover:bg-white"
             >
               Raise your voice
+            </Link>
+            <Link
+              href="/my-groups"
+              className="inline-flex items-center rounded-md border border-zinc-700 px-3 py-1.5 text-xs font-medium text-zinc-400 transition hover:bg-zinc-800 hover:text-zinc-200 sm:hidden"
+            >
+              My groups
+            </Link>
+            <Link
+              href={`${base}/admin`}
+              className="inline-flex items-center rounded-md border border-zinc-700 px-3 py-1.5 text-xs font-medium text-zinc-400 transition hover:bg-zinc-800 hover:text-zinc-200 sm:hidden"
+            >
+              Admin
             </Link>
           </div>
         </div>

@@ -7,33 +7,15 @@ export default function AdminPage() {
     <main className="min-h-screen bg-slate-950 text-slate-100">
       {/* NAV */}
       <header className="border-b border-slate-800 bg-slate-950/80 backdrop-blur">
-        <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-4">
-          <Link href="/" className="text-lg font-semibold text-white">
+        <div className="mx-auto max-w-5xl px-4 py-3 sm:px-6">
+          <Link href="/" className="font-display text-base font-medium text-white">
             Agentis
           </Link>
-
-          <nav className="flex items-center gap-3">
-            <Link
-              href="/"
-              className="rounded-xl border border-slate-700 px-4 py-2 text-sm text-slate-300 hover:bg-slate-800"
-            >
-              Home
-            </Link>
-            <Link
-              href="/submit"
-              className="rounded-xl border border-slate-700 px-4 py-2 text-sm text-slate-300 hover:bg-slate-800"
-            >
-              Submit
-            </Link>
-            <Link
-              href="/insights"
-              className="rounded-xl border border-slate-700 px-4 py-2 text-sm text-slate-300 hover:bg-slate-800"
-            >
-              Insights
-            </Link>
-            <Link
-              href="/admin"
-              className="rounded-xl border border-cyan-500/40 bg-cyan-500/10 px-4 py-2 text-sm text-cyan-300"
+          <nav className="mt-2 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[11px] sm:gap-x-3 sm:text-xs">
+            <Link href="/" className="font-medium text-slate-400 transition hover:text-slate-100">Home</Link>
+            <Link href="/submit" className="font-medium text-slate-400 transition hover:text-slate-100">Submit</Link>
+            <Link href="/insights" className="font-medium text-slate-400 transition hover:text-slate-100">Insights</Link>
+            <Link href="/admin" className="font-medium text-cyan-300"
             >
               Admin
             </Link>

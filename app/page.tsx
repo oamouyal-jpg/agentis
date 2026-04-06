@@ -253,7 +253,7 @@ export default function HomePage() {
           </div>
         </header>
 
-        <div className="mx-auto max-w-6xl px-6 pb-24 pt-10 sm:pt-12 lg:px-10">
+        <div className="mx-auto max-w-6xl px-4 pb-24 pt-8 sm:px-6 sm:pt-12 lg:px-10">
           <PressDeskHero
             openQuestionCount={openQuestionCount}
             wireQuestions={wireQuestions}
@@ -262,14 +262,14 @@ export default function HomePage() {
             groupsLoading={loading}
           />
 
-          <section className="mb-10 rounded-sm border border-zinc-800 bg-zinc-900/35 p-8">
+          <section className="mb-6 rounded-sm border border-zinc-800 bg-zinc-900/35 p-4 sm:mb-10 sm:p-8">
             <h2 className="font-display text-lg font-medium text-zinc-50">
               {t("home.getStartedTitle")}
             </h2>
             <p className="mt-2 max-w-xl text-sm leading-relaxed text-zinc-400">
               {t("home.getStartedBody")}
             </p>
-            <div className="mt-8 flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-stretch">
+            <div className="mt-6 flex flex-col gap-3 sm:mt-8 sm:flex-row sm:flex-wrap sm:items-stretch sm:gap-4">
               <Link
                 href="/s/open"
                 className="inline-flex items-center justify-center rounded-md bg-zinc-100 px-8 py-3 text-center text-sm font-medium text-zinc-950 transition hover:bg-white"
@@ -310,7 +310,7 @@ export default function HomePage() {
           {/* Create — always visible (not tucked away) */}
           <section
             id="create-group"
-            className="mb-10 rounded-sm border border-zinc-800 bg-zinc-900/35 p-8"
+            className="mb-6 rounded-sm border border-zinc-800 bg-zinc-900/35 p-4 sm:mb-10 sm:p-8"
           >
             <h2 className="font-display text-lg font-medium text-zinc-50">
               {t("home.createTitle")}
@@ -318,7 +318,7 @@ export default function HomePage() {
             <p className="mt-2 max-w-xl text-sm leading-relaxed text-zinc-400">
               {t("home.createBody")}
             </p>
-            <form onSubmit={handleCreate} className="mt-8 max-w-lg space-y-4">
+            <form onSubmit={handleCreate} className="mt-6 max-w-lg space-y-4 sm:mt-8">
               <div>
                 <label className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-zinc-500">
                   {t("home.labelGroupName")}

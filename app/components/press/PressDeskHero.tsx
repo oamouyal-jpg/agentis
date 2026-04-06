@@ -114,25 +114,25 @@ export function PressDeskHero({
         }));
 
   return (
-    <div className="mb-16 border-b border-zinc-800 pb-16">
-      <div className="mb-10 flex flex-col gap-2 border-b border-zinc-800 pb-6 sm:flex-row sm:items-end sm:justify-between">
+    <div className="mb-10 border-b border-zinc-800 pb-10 sm:mb-16 sm:pb-16">
+      <div className="mb-6 flex flex-col gap-2 border-b border-zinc-800 pb-4 sm:mb-10 sm:flex-row sm:items-end sm:justify-between sm:pb-6">
         <div>
-          <p className="font-display text-2xl font-medium tracking-tight text-zinc-100 sm:text-3xl">
+          <p className="font-display text-xl font-medium tracking-tight text-zinc-100 sm:text-3xl">
             {t("common.agentis")}
           </p>
-          <p className="mt-1 text-[11px] font-medium uppercase tracking-[0.25em] text-zinc-500">
+          <p className="mt-1 text-[10px] font-medium uppercase tracking-[0.25em] text-zinc-500 sm:text-[11px]">
             {t("hero.mastheadSub")}
           </p>
         </div>
-        <p className="font-mono text-xs text-zinc-600">{dateLine || "—"}</p>
+        <p className="font-mono text-[10px] text-zinc-600 sm:text-xs">{dateLine || "—"}</p>
       </div>
 
-      <div className="grid gap-10 lg:grid-cols-12 lg:gap-12">
+      <div className="grid gap-6 sm:gap-10 lg:grid-cols-12 lg:gap-12">
         <div className="lg:col-span-5">
           <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-red-400/90">
             {t("hero.leadKicker")}
           </p>
-          <h1 className="font-display mt-3 text-3xl font-medium leading-[1.12] tracking-tight text-zinc-50 sm:text-4xl lg:text-[2.35rem] lg:leading-[1.1]">
+          <h1 className="font-display mt-3 text-2xl font-medium leading-[1.15] tracking-tight text-zinc-50 sm:text-4xl lg:text-[2.35rem] lg:leading-[1.1]">
             {t("hero.leadTitle")}
           </h1>
           <p className="mt-5 text-sm leading-relaxed text-zinc-400 sm:text-[15px]">
@@ -152,7 +152,7 @@ export function PressDeskHero({
               {t("hero.fileConcern")}
             </Link>
           </div>
-          <dl className="mt-10 grid grid-cols-2 gap-x-4 gap-y-6 border-t border-zinc-800 pt-8 md:grid-cols-3">
+          <dl className="mt-6 grid grid-cols-2 gap-x-4 gap-y-4 border-t border-zinc-800 pt-6 sm:mt-10 sm:gap-y-6 sm:pt-8 md:grid-cols-3">
             <div>
               <dt className="text-[10px] font-medium uppercase tracking-wider text-zinc-500">
                 {t("hero.statQuestions")}
@@ -198,8 +198,8 @@ export function PressDeskHero({
         </div>
       </div>
 
-      <div className="mt-14">
-        <div className="mb-6 flex items-baseline justify-between gap-4">
+      <div className="mt-8 sm:mt-14">
+        <div className="mb-4 flex items-baseline justify-between gap-4 sm:mb-6">
           <h2 className="font-display text-xl font-medium text-zinc-100">
             {t("hero.wireTitle")}
           </h2>
@@ -225,7 +225,7 @@ export function PressDeskHero({
         </div>
       </div>
 
-      <div className="mt-14 grid gap-10 lg:grid-cols-12">
+      <div className="mt-8 grid gap-6 sm:mt-14 sm:gap-10 lg:grid-cols-12">
         <div className="lg:col-span-7">
           <h2 className="font-display text-lg font-medium text-zinc-100">
             {t("hero.fieldTitle")}
@@ -251,7 +251,7 @@ export function PressDeskHero({
             ))}
           </div>
         </div>
-        <div className="rounded-sm border border-zinc-800 bg-zinc-900/30 p-6 lg:col-span-5">
+        <div className="rounded-sm border border-zinc-800 bg-zinc-900/30 p-4 sm:p-6 lg:col-span-5">
           <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-amber-200/80">
             {t("hero.editorialKicker")}
           </p>
