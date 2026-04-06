@@ -133,19 +133,7 @@ export default function SpaceHomePage({
       </header>
 
       <section className="mx-auto max-w-6xl px-6 py-12 lg:px-10">
-        <div className="mb-10 flex flex-col gap-1 border-b border-zinc-800 pb-6 sm:flex-row sm:items-end sm:justify-between">
-          <div>
-            <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-zinc-500">
-              Group
-            </p>
-            <p className="mt-1 font-mono text-[11px] text-zinc-600">
-              {slug}
-            </p>
-          </div>
-          <p className="font-mono text-[11px] text-zinc-600">{dateLine || "—"}</p>
-        </div>
-
-        <div className="mb-12 border-b border-zinc-800 pb-12">
+        <div className="mb-10 border-b border-zinc-800 pb-6">
           <div className="flex flex-wrap items-center gap-4">
             {branding?.logoUrl ? (
               // eslint-disable-next-line @next/next/no-img-element -- org logos can be on any host (https only)
@@ -155,14 +143,19 @@ export default function SpaceHomePage({
                 className="h-12 w-12 rounded-md border border-zinc-800 bg-zinc-950 object-contain p-1"
               />
             ) : null}
-            <h1
-              className="font-display text-3xl font-medium tracking-tight text-zinc-50 sm:text-4xl md:text-[2.4rem] md:leading-tight"
-              style={
-                branding?.accentColor ? { color: branding.accentColor } : undefined
-              }
-            >
-              {spaceName}
-            </h1>
+            <div>
+              <h1
+                className="font-display text-3xl font-medium tracking-tight text-zinc-50 sm:text-4xl"
+                style={
+                  branding?.accentColor ? { color: branding.accentColor } : undefined
+                }
+              >
+                {spaceName}
+              </h1>
+              <p className="mt-1 font-mono text-[11px] text-zinc-600">
+                {dateLine || "—"}
+              </p>
+            </div>
           </div>
 
           <p className="mt-4 max-w-2xl text-sm leading-relaxed text-zinc-400 sm:text-[15px]">
@@ -172,16 +165,22 @@ export default function SpaceHomePage({
           <div className="mt-6 flex flex-wrap items-center gap-2">
             <FollowGroupButton slug={slug} name={spaceName} />
             <Link
-              href="/my-groups"
+              href={`${base}/submit`}
               className="rounded-md border border-zinc-700 px-3 py-1.5 text-xs font-medium text-zinc-400 transition hover:border-zinc-600 hover:bg-zinc-900 hover:text-zinc-200"
             >
-              My groups
+              Raise your voice
             </Link>
             <Link
               href={`${base}/insights`}
               className="rounded-md border border-zinc-700 px-3 py-1.5 text-xs font-medium text-zinc-400 transition hover:border-zinc-600 hover:bg-zinc-900 hover:text-zinc-200"
             >
               Insights
+            </Link>
+            <Link
+              href="/my-groups"
+              className="rounded-md border border-zinc-700 px-3 py-1.5 text-xs font-medium text-zinc-400 transition hover:border-zinc-600 hover:bg-zinc-900 hover:text-zinc-200"
+            >
+              My groups
             </Link>
             <Link
               href={`${base}/admin`}
@@ -191,31 +190,40 @@ export default function SpaceHomePage({
             </Link>
           </div>
 
-          <div className="mt-10 grid gap-4 sm:grid-cols-3">
-            <div className="rounded-lg border border-zinc-800 bg-zinc-900/40 p-5">
-              <p className="text-xs font-medium text-zinc-500">Active questions</p>
+          <div className="mt-8 grid gap-3 sm:grid-cols-3">
+            <Link
+              href="#questions"
+              className="group rounded-lg border border-zinc-800 bg-zinc-900/40 p-5 transition hover:border-zinc-700 hover:bg-zinc-900/70"
+            >
+              <p className="text-xs font-medium text-zinc-500 group-hover:text-zinc-400">Active questions</p>
               <p className="mt-2 text-2xl font-semibold tabular-nums text-zinc-50">
                 {questions.length}
               </p>
-            </div>
+            </Link>
 
-            <div className="rounded-lg border border-zinc-800 bg-zinc-900/40 p-5">
-              <p className="text-xs font-medium text-zinc-500">Status</p>
+            <Link
+              href={`${base}/insights`}
+              className="group rounded-lg border border-zinc-800 bg-zinc-900/40 p-5 transition hover:border-zinc-700 hover:bg-zinc-900/70"
+            >
+              <p className="text-xs font-medium text-zinc-500 group-hover:text-zinc-400">Insights</p>
               <p className="mt-2 text-sm font-medium text-zinc-300">
-                {loading ? "Loading…" : "Active"}
+                View analysis &rarr;
               </p>
-            </div>
+            </Link>
 
-            <div className="rounded-lg border border-zinc-800 bg-zinc-900/40 p-5">
-              <p className="text-xs font-medium text-zinc-500">Scope</p>
+            <Link
+              href={`${base}/submit`}
+              className="group rounded-lg border border-zinc-800 bg-zinc-900/40 p-5 transition hover:border-zinc-700 hover:bg-zinc-900/70"
+            >
+              <p className="text-xs font-medium text-zinc-500 group-hover:text-zinc-400">Raise your voice</p>
               <p className="mt-2 text-sm font-medium text-zinc-300">
-                This group only
+                Submit a concern &rarr;
               </p>
-            </div>
+            </Link>
           </div>
         </div>
 
-        <div className="mb-8">
+        <div id="questions" className="mb-8 scroll-mt-24">
           <h2 className="font-display text-xl font-medium text-zinc-50">
             Issues &amp; votes
           </h2>
