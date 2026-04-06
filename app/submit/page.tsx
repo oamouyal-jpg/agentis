@@ -46,22 +46,16 @@ export default function SubmitPage() {
   return (
     <main className="min-h-screen bg-zinc-950 text-zinc-100">
       <header className="border-b border-zinc-800 bg-zinc-950/90 backdrop-blur-sm">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3 sm:px-6 lg:px-10">
+        <div className="mx-auto max-w-6xl px-4 py-3 sm:px-6 lg:px-10">
           <Link
             href="/"
-            className="font-display text-base font-medium tracking-tight text-zinc-100 sm:text-lg"
+            className="font-display text-base font-medium tracking-tight text-zinc-100"
           >
             Agentis
           </Link>
-
-          <nav className="flex items-center gap-1.5 sm:gap-2">
+          <nav className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] sm:text-xs">
+            <Link href="/" className="font-medium text-zinc-400 transition hover:text-zinc-100">Home</Link>
             <ShareButton text="Share your concern on Agentis" />
-            <Link
-              href="/"
-              className="rounded-md px-2.5 py-1 text-[11px] font-medium text-zinc-400 transition hover:bg-zinc-800 hover:text-zinc-200 sm:text-xs"
-            >
-              Home
-            </Link>
           </nav>
         </div>
       </header>

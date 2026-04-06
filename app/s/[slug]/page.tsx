@@ -111,25 +111,25 @@ export default function SpaceHomePage({
   return (
     <main className="min-h-screen bg-zinc-950 text-zinc-100">
       <header className="border-b border-zinc-800 bg-zinc-950/90 backdrop-blur-sm">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3 sm:px-6 lg:px-10">
-          <div className="flex items-center gap-3">
+        <div className="mx-auto max-w-6xl px-4 py-3 sm:px-6 lg:px-10">
+          <div className="flex items-center gap-2">
             {branding?.logoUrl ? (
               // eslint-disable-next-line @next/next/no-img-element -- org logos can be on any host (https only)
               <img
                 src={branding.logoUrl}
                 alt=""
-                className="h-7 w-7 rounded border border-zinc-800 bg-zinc-950 object-contain"
+                className="h-6 w-6 rounded border border-zinc-800 bg-zinc-950 object-contain"
               />
             ) : null}
             <Link
               href="/"
-              className="font-display text-base font-medium tracking-tight text-zinc-100 sm:text-lg"
+              className="font-display text-base font-medium tracking-tight text-zinc-100"
             >
               Agentis
             </Link>
-            <span className="hidden text-zinc-700 sm:inline">/</span>
+            <span className="text-zinc-700">/</span>
             <h1
-              className="hidden text-sm font-medium text-zinc-400 sm:inline"
+              className="truncate text-sm font-medium text-zinc-400"
               style={
                 branding?.accentColor ? { color: branding.accentColor } : undefined
               }
@@ -138,26 +138,12 @@ export default function SpaceHomePage({
             </h1>
           </div>
 
-          <nav className="flex items-center gap-1.5 sm:gap-2">
-            <Link
-              href={`${base}/submit`}
-              className="rounded-md px-2.5 py-1 text-[11px] font-medium text-zinc-400 transition hover:bg-zinc-800 hover:text-zinc-200 sm:text-xs"
-            >
-              Submit
-            </Link>
-            <Link
-              href={`${base}/insights`}
-              className="hidden rounded-md px-2.5 py-1 text-xs font-medium text-zinc-400 transition hover:bg-zinc-800 hover:text-zinc-200 sm:inline-flex"
-            >
-              Insights
-            </Link>
-            <Link
-              href="/my-groups"
-              className="hidden rounded-md px-2.5 py-1 text-xs font-medium text-zinc-400 transition hover:bg-zinc-800 hover:text-zinc-200 sm:inline-flex"
-            >
-              My groups
-            </Link>
-            <ShareButton title={spaceName} text={`Join ${spaceName} on Agentis`} className="px-2.5 py-1 text-[11px] sm:text-xs" />
+          <nav className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] sm:text-xs">
+            <Link href={`${base}/submit`} className="font-medium text-zinc-400 transition hover:text-zinc-100">Submit</Link>
+            <Link href={`${base}/insights`} className="font-medium text-zinc-400 transition hover:text-zinc-100">Insights</Link>
+            <Link href="/my-groups" className="font-medium text-zinc-400 transition hover:text-zinc-100">My groups</Link>
+            <Link href={`${base}/admin`} className="font-medium text-zinc-400 transition hover:text-zinc-100">Admin</Link>
+            <ShareButton title={spaceName} text={`Join ${spaceName} on Agentis`} />
             <LanguageSwitcher />
           </nav>
         </div>
@@ -165,38 +151,11 @@ export default function SpaceHomePage({
 
       <section className="mx-auto max-w-6xl px-4 py-6 sm:px-6 sm:py-10 lg:px-10">
         <div className="mb-6 sm:mb-8">
-          <h1
-            className="font-display text-xl font-medium tracking-tight text-zinc-50 sm:hidden"
-            style={
-              branding?.accentColor ? { color: branding.accentColor } : undefined
-            }
-          >
-            {spaceName}
-          </h1>
-          <p className="mt-1 text-sm text-zinc-500 sm:mt-0">
-            {questions.length} question{questions.length !== 1 ? "s" : ""} &middot; {dateLine || "—"}
-          </p>
-
-          <div className="mt-3 flex flex-wrap items-center gap-1.5">
+          <div className="flex flex-wrap items-center gap-2">
             <FollowGroupButton slug={slug} name={spaceName} />
-            <Link
-              href={`${base}/insights`}
-              className="rounded-md px-2.5 py-1 text-[11px] font-medium text-zinc-500 transition hover:bg-zinc-800 hover:text-zinc-200 sm:hidden"
-            >
-              Insights
-            </Link>
-            <Link
-              href="/my-groups"
-              className="rounded-md px-2.5 py-1 text-[11px] font-medium text-zinc-500 transition hover:bg-zinc-800 hover:text-zinc-200 sm:hidden"
-            >
-              My groups
-            </Link>
-            <Link
-              href={`${base}/admin`}
-              className="rounded-md px-2.5 py-1 text-[11px] font-medium text-zinc-500 transition hover:bg-zinc-800 hover:text-zinc-200"
-            >
-              Admin
-            </Link>
+            <span className="text-sm text-zinc-500">
+              {questions.length} question{questions.length !== 1 ? "s" : ""} &middot; {dateLine || "—"}
+            </span>
           </div>
         </div>
 
