@@ -1,10 +1,6 @@
-const CACHE_NAME = "agentis-v1";
-const PRECACHE = ["/", "/manifest.json"];
+const CACHE_NAME = "agentis-v2";
 
 self.addEventListener("install", (e) => {
-  e.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(PRECACHE))
-  );
   self.skipWaiting();
 });
 
@@ -22,15 +18,28 @@ self.addEventListener("fetch", (e) => {
   if (request.method !== "GET") return;
 
   const url = new URL(request.url);
+
   if (url.pathname.startsWith("/api/")) return;
 
+  const isStatic =
+    url.pathname.startsWith("/_next/static/") ||
+    url.pathname.startsWith("/icons/") ||
+    url.pathname.endsWith(".js") ||
+    url.pathname.endsWith(".css") ||
+    url.pathname.endsWith(".png") ||
+    url.pathname.endsWith(".svg") ||
+    url.pathname.endsWith(".woff2");
+
+  if (!isStatic) return;
+
   e.respondWith(
-    fetch(request)
-      .then((res) => {
-        const clone = res.clone();
-        caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
-        return res;
-      })
-      .catch(() => caches.match(request))
+    caches.open(CACHE_NAME).then((cache) =>
+      cache.match(request).then(
+        (cached) => cached || fetch(request).then((res) => {
+          cache.put(request, res.clone());
+          return res;
+        })
+      )
+    )
   );
 });
