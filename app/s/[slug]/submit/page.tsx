@@ -53,7 +53,7 @@ export default function SpaceSubmitPage({
   return (
     <main className="min-h-screen bg-zinc-950 text-zinc-100">
       <header className="border-b border-zinc-800 bg-zinc-950/90 backdrop-blur-sm">
-        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 px-6 py-4 lg:px-10">
+        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4 lg:px-10">
           <Link
             href="/"
             className="font-display text-lg font-medium tracking-tight text-zinc-100"
@@ -61,45 +61,15 @@ export default function SpaceSubmitPage({
             Agentis
           </Link>
 
-          <nav className="flex flex-wrap items-center gap-2">
-            <Link
-              href="/"
-              className="rounded-md border border-zinc-700 px-3 py-1.5 text-xs font-medium text-zinc-400 transition hover:border-zinc-600 hover:bg-zinc-900 hover:text-zinc-200"
-            >
-              Home
-            </Link>
-            <Link
-              href="/"
-              className="rounded-md border border-zinc-700 px-3 py-1.5 text-xs font-medium text-zinc-400 transition hover:border-zinc-600 hover:bg-zinc-900 hover:text-zinc-200"
-            >
-              Directory
-            </Link>
+          <div className="flex items-center gap-2">
+            <ShareButton text="Share your concern on Agentis" />
             <Link
               href={base}
               className="rounded-md border border-zinc-700 px-3 py-1.5 text-xs font-medium text-zinc-400 transition hover:border-zinc-600 hover:bg-zinc-900 hover:text-zinc-200"
             >
-              Overview
+              Back
             </Link>
-            <Link
-              href={`${base}/submit`}
-              className="rounded-md border border-zinc-600 bg-zinc-900 px-3 py-1.5 text-xs font-medium text-zinc-200"
-            >
-              Submit
-            </Link>
-            <Link
-              href={`${base}/admin`}
-              className="rounded-md border border-zinc-700 px-3 py-1.5 text-xs font-medium text-zinc-400 transition hover:border-zinc-600 hover:bg-zinc-900 hover:text-zinc-200"
-            >
-              Admin
-            </Link>
-            <Link
-              href={`${base}/insights`}
-              className="rounded-md border border-zinc-700 px-3 py-1.5 text-xs font-medium text-zinc-400 transition hover:border-zinc-600 hover:bg-zinc-900 hover:text-zinc-200"
-            >
-              Insights
-            </Link>
-            <ShareButton text="Share your concern on Agentis" />
-          </nav>
+          </div>
         </div>
       </header>
 

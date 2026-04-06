@@ -111,38 +111,24 @@ export default function SpaceHomePage({
   return (
     <main className="min-h-screen bg-zinc-950 text-zinc-100">
       <header className="border-b border-zinc-800 bg-zinc-950/90 backdrop-blur-sm">
-        <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-6 py-4 lg:px-10">
-          <div className="flex items-center gap-2">
-            <Link
-              href="/"
-              className="font-display text-lg font-medium tracking-tight text-zinc-100"
-            >
-              Agentis
-            </Link>
-            <Link
-              href="/my-groups"
-              className="rounded-md border border-zinc-700 px-3 py-1.5 text-xs font-medium text-zinc-400 transition hover:border-zinc-600 hover:bg-zinc-900 hover:text-zinc-200"
-            >
-              My groups
-            </Link>
-            <ShareButton title={spaceName} text={`Join ${spaceName} on Agentis`} />
-          </div>
+        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4 lg:px-10">
+          <Link
+            href="/"
+            className="font-display text-lg font-medium tracking-tight text-zinc-100"
+          >
+            Agentis
+          </Link>
 
-          <nav className="flex items-center gap-2">
+          <div className="flex items-center gap-2">
+            <ShareButton title={spaceName} text={`Join ${spaceName} on Agentis`} />
             <Link
               href={`${base}/submit`}
               className="rounded-md border border-zinc-700 px-3 py-1.5 text-xs font-medium text-zinc-400 transition hover:border-zinc-600 hover:bg-zinc-900 hover:text-zinc-200"
             >
               Submit
             </Link>
-            <Link
-              href={`${base}/insights`}
-              className="hidden sm:inline-flex rounded-md border border-zinc-700 px-3 py-1.5 text-xs font-medium text-zinc-400 transition hover:border-zinc-600 hover:bg-zinc-900 hover:text-zinc-200"
-            >
-              Insights
-            </Link>
             <LanguageSwitcher />
-          </nav>
+          </div>
         </div>
       </header>
 
@@ -186,22 +172,22 @@ export default function SpaceHomePage({
           <div className="mt-6 flex flex-wrap items-center gap-2">
             <FollowGroupButton slug={slug} name={spaceName} />
             <Link
-              href={`${base}/admin`}
-              className="rounded-md border border-zinc-700 px-3 py-1.5 text-xs font-medium text-zinc-400 transition hover:border-zinc-600 hover:bg-zinc-900 hover:text-zinc-200"
-            >
-              Admin
-            </Link>
-            <Link
               href="/my-groups"
-              className="sm:hidden rounded-md border border-zinc-700 px-3 py-1.5 text-xs font-medium text-zinc-400 transition hover:border-zinc-600 hover:bg-zinc-900 hover:text-zinc-200"
+              className="rounded-md border border-zinc-700 px-3 py-1.5 text-xs font-medium text-zinc-400 transition hover:border-zinc-600 hover:bg-zinc-900 hover:text-zinc-200"
             >
               My groups
             </Link>
             <Link
               href={`${base}/insights`}
-              className="sm:hidden rounded-md border border-zinc-700 px-3 py-1.5 text-xs font-medium text-zinc-400 transition hover:border-zinc-600 hover:bg-zinc-900 hover:text-zinc-200"
+              className="rounded-md border border-zinc-700 px-3 py-1.5 text-xs font-medium text-zinc-400 transition hover:border-zinc-600 hover:bg-zinc-900 hover:text-zinc-200"
             >
               Insights
+            </Link>
+            <Link
+              href={`${base}/admin`}
+              className="rounded-md border border-zinc-700 px-3 py-1.5 text-xs font-medium text-zinc-400 transition hover:border-zinc-600 hover:bg-zinc-900 hover:text-zinc-200"
+            >
+              Admin
             </Link>
           </div>
 

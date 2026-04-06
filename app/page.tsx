@@ -245,17 +245,14 @@ export default function HomePage() {
             >
               {t("common.agentis")}
             </Link>
-            <div className="flex flex-wrap items-center gap-3">
+            <div className="flex items-center gap-2">
+              <ShareButton text="Check out Agentis" />
               <Link
                 href="/my-groups"
                 className="rounded-md border border-zinc-700 px-3 py-1.5 text-xs font-medium text-zinc-400 transition hover:border-zinc-600 hover:bg-zinc-900 hover:text-zinc-200"
               >
                 {t("home.myGroupsTitle")}
               </Link>
-              <ShareButton text="Check out Agentis" />
-              <span className="hidden text-xs text-zinc-500 sm:inline">
-                {t("header.tagline")}
-              </span>
               <LanguageSwitcher />
             </div>
           </div>
