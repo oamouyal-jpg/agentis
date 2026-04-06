@@ -112,22 +112,23 @@ export default function SpaceHomePage({
     <main className="min-h-screen bg-zinc-950 text-zinc-100">
       <header className="border-b border-zinc-800 bg-zinc-950/90 backdrop-blur-sm">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-6 py-4 lg:px-10">
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
             <Link
               href="/"
               className="font-display text-lg font-medium tracking-tight text-zinc-100"
             >
               Agentis
             </Link>
-          </div>
-
-          <nav className="flex items-center gap-2">
             <Link
               href="/my-groups"
-              className="hidden sm:inline-flex rounded-md border border-zinc-700 px-3 py-1.5 text-xs font-medium text-zinc-400 transition hover:border-zinc-600 hover:bg-zinc-900 hover:text-zinc-200"
+              className="rounded-md border border-zinc-700 px-3 py-1.5 text-xs font-medium text-zinc-400 transition hover:border-zinc-600 hover:bg-zinc-900 hover:text-zinc-200"
             >
               My groups
             </Link>
+            <ShareButton title={spaceName} text={`Join ${spaceName} on Agentis`} />
+          </div>
+
+          <nav className="flex items-center gap-2">
             <Link
               href={`${base}/submit`}
               className="rounded-md border border-zinc-700 px-3 py-1.5 text-xs font-medium text-zinc-400 transition hover:border-zinc-600 hover:bg-zinc-900 hover:text-zinc-200"
@@ -140,7 +141,6 @@ export default function SpaceHomePage({
             >
               Insights
             </Link>
-            <ShareButton title={spaceName} text={`Join ${spaceName} on Agentis`} />
             <LanguageSwitcher />
           </nav>
         </div>
