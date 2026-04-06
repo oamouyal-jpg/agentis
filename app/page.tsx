@@ -6,6 +6,7 @@ import type { FormEvent } from "react";
 import { useEffect, useMemo, useState } from "react";
 import { FollowGroupButton } from "./components/FollowGroupButton";
 import { LanguageSwitcher } from "./components/LanguageSwitcher";
+import { ShareButton } from "./components/ShareButton";
 import { PressDeskHero } from "./components/press/PressDeskHero";
 import { useI18n } from "../lib/i18n/I18nProvider";
 import { API_BASE } from "../lib/apiBase";
@@ -251,6 +252,7 @@ export default function HomePage() {
               >
                 {t("home.myGroupsTitle")}
               </Link>
+              <ShareButton text="Check out Agentis" />
               <span className="hidden text-xs text-zinc-500 sm:inline">
                 {t("header.tagline")}
               </span>

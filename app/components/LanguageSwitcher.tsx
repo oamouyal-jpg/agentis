@@ -14,29 +14,20 @@ const short: Record<AppLocale, string> = {
 };
 
 export function LanguageSwitcher() {
-  const { locale, setLocale, t } = useI18n();
+  const { locale, setLocale } = useI18n();
 
   return (
-    <div
-      className="flex flex-wrap items-center gap-1"
-      role="group"
-      aria-label={t("header.language")}
+    <select
+      value={locale}
+      onChange={(e) => setLocale(e.target.value as AppLocale)}
+      className="rounded-md border border-zinc-700 bg-zinc-900 px-2 py-1.5 font-mono text-xs font-medium text-zinc-300 outline-none transition hover:border-zinc-600 hover:text-zinc-100"
+      aria-label="Language"
     >
       {locales.map((loc) => (
-        <button
-          key={loc}
-          type="button"
-          onClick={() => setLocale(loc)}
-          className={`rounded px-2 py-1 font-mono text-[10px] font-medium uppercase tracking-wide transition ${
-            locale === loc
-              ? "bg-zinc-100 text-zinc-950"
-              : "text-zinc-500 hover:bg-zinc-800 hover:text-zinc-300"
-          }`}
-          title={localeLabels[loc]}
-        >
-          {short[loc]}
-        </button>
+        <option key={loc} value={loc}>
+          {short[loc]} — {localeLabels[loc]}
+        </option>
       ))}
-    </div>
+    </select>
   );
 }
