@@ -38,6 +38,9 @@ This repo includes a Render Blueprint (`render.yaml`) that creates **one** web s
 
 - `OPENAI_API_KEY`: (optional) enables AI narrative generation for `/insights`
 - `NEXT_PUBLIC_SITE_URL`: your production URL (for share links / OG metadata)
+- `NEXT_PUBLIC_API_BASE_URL`: optional. Leave **unset** on Render (same origin → requests use `/api`). If you set it to your public site URL, use `https://YOUR-SERVICE.onrender.com` **without** a path — the app will append `/api`. Do **not** point this at a different host unless that host serves the same API.
+
+Local **split** dev (Backend on :4000): set `NEXT_PUBLIC_API_BASE_URL=http://localhost:4000` (no `/api`; the Backend listens at the root).
 
 ## Spaces (Phase 1)
 

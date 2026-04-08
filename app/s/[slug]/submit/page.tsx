@@ -37,14 +37,33 @@ export default function SpaceSubmitPage({
         body: JSON.stringify({ text: text.trim() }),
       });
 
+      const raw = await res.text();
+      let body: { ok?: boolean; error?: string; details?: string } = {};
+      try {
+        body = raw ? JSON.parse(raw) : {};
+      } catch {
+        body = {};
+      }
+
       if (!res.ok) {
-        throw new Error("Failed to submit");
+        const hint =
+          res.status === 404
+            ? " API not found — check that the app URL uses /api (set NEXT_PUBLIC_API_BASE_URL to https://…/api or leave unset)."
+            : "";
+        throw new Error(
+          (body.error || body.details || raw || `HTTP ${res.status}`) + hint
+        );
       }
 
       setText("");
       setMessage("Submission sent successfully.");
-    } catch (_err) {
-      setMessage("There was a problem submitting your concern.");
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Submit failed";
+      setMessage(
+        msg.length > 280
+          ? `${msg.slice(0, 280)}…`
+          : `There was a problem submitting your concern. ${msg}`
+      );
     } finally {
       setSubmitting(false);
     }

@@ -91,17 +91,26 @@ export type SpaceTrendingResponse = {
 };
 
 export async function fetchSpaceTrending(slug: string): Promise<SpaceTrendingResponse> {
-  // Always hit /api/spaces/:slug/trending — do not use spaceUrl(), because "open" maps to
-  // legacy /api/* paths and would break trending (see spaceUrl).
+  // Always hit …/api/spaces/:slug/trending — do not use spaceUrl() for "open" (see spaceUrl).
   const url = `${API_BASE}/spaces/${encodeURIComponent(slug)}/trending`;
   const res = await fetch(url, {
     cache: "no-store",
     headers: buildSpaceRequestHeaders(slug),
   });
-  const data = (await res.json()) as SpaceTrendingResponse & { ok?: boolean; error?: string };
+  const text = await res.text();
+  let data: (SpaceTrendingResponse & { ok?: boolean; error?: string }) | null = null;
+  try {
+    data = JSON.parse(text) as SpaceTrendingResponse & { ok?: boolean; error?: string };
+  } catch {
+    throw new Error(
+      `Trending: expected JSON, got HTTP ${res.status}. Check NEXT_PUBLIC_API_BASE_URL includes /api (e.g. https://your-app.onrender.com/api).`
+    );
+  }
   if (!res.ok || data.ok !== true) {
     throw new Error(
-      typeof data.error === "string" ? data.error : `Trending failed (${res.status})`
+      typeof data.error === "string"
+        ? data.error
+        : `Trending failed (${res.status})`
     );
   }
   return data;
