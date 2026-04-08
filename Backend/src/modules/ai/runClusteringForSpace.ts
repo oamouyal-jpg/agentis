@@ -1,4 +1,5 @@
 import { dataStore } from "../../store/store";
+import { refreshSpaceTrending } from "../../services/trending.service";
 import { aiClusterSubmissions } from "./aiClusterSubmissions";
 import { assignSubmissionsToExistingQuestions } from "./assignSubmissionsToExistingQuestions";
 import { generateQuestionFromTheme } from "./question.service";
@@ -9,6 +10,7 @@ export type ClusteringResult = Record<string, unknown>;
 export async function runClusteringForSpace(
   spaceId: number
 ): Promise<ClusteringResult> {
+  try {
   const submissions = await dataStore.getSubmissions(spaceId);
   const questions = await dataStore.getQuestions(spaceId);
 
@@ -168,6 +170,13 @@ export async function runClusteringForSpace(
     clusters,
     questions: createdQuestions,
   };
+  } finally {
+    try {
+      await refreshSpaceTrending(spaceId);
+    } catch (e) {
+      console.error(`[trending] refresh failed for space ${spaceId}:`, e);
+    }
+  }
 }
 
 const clusteringInFlight = new Map<number, boolean>();

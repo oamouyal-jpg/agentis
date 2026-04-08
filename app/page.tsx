@@ -8,6 +8,7 @@ import { FollowGroupButton } from "./components/FollowGroupButton";
 import { LanguageSwitcher } from "./components/LanguageSwitcher";
 import { ShareButton } from "./components/ShareButton";
 import { PressDeskHero } from "./components/press/PressDeskHero";
+import { SpaceTrendingSection } from "./components/SpaceTrendingSection";
 import { useI18n } from "../lib/i18n/I18nProvider";
 import { API_BASE } from "../lib/apiBase";
 import { useMyGroups } from "../lib/useMyGroups";
@@ -261,6 +262,8 @@ export default function HomePage() {
             groupCount={loading ? null : spaces.length}
             groupsLoading={loading}
           />
+
+          <SpaceTrendingSection slug="open" />
 
           <section className="mb-6 rounded-sm border border-zinc-800 bg-zinc-900/35 p-4 sm:mb-10 sm:p-8">
             <h2 className="font-display text-lg font-medium text-zinc-50">

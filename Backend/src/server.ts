@@ -14,6 +14,7 @@ import cors from "cors";
 import rateLimit from "express-rate-limit";
 import adminRoutes from "./modules/ai/admin.routes";
 import { scheduleClusteringAfterSubmission } from "./modules/ai/runClusteringForSpace";
+import { getTrendingApiPayload } from "./services/trending.service";
 import { dataStore, type Question } from "./store/store";
 import type { Space } from "./store/spaceTypes";
 import { loadSpaceBySlug, requireHostAccess, requireSpaceAccess } from "./middleware/spaceContext";
@@ -186,6 +187,19 @@ spaceRouter.use(requireSpaceAccess);
 spaceRouter.get("/questions", async (_req: Request, res: Response) => {
   const spaceId = res.locals.spaceId as number;
   res.json(await dataStore.getQuestions(spaceId));
+});
+
+/** What’s hot + emerging topics from submissions/comments (see trending.service.ts). */
+spaceRouter.get("/trending", async (_req: Request, res: Response) => {
+  try {
+    const spaceId = res.locals.spaceId as number;
+    res.json(await getTrendingApiPayload(spaceId));
+  } catch (e) {
+    res.status(500).json({
+      ok: false,
+      error: e instanceof Error ? e.message : String(e),
+    });
+  }
 });
 
 spaceRouter.get(
@@ -932,6 +946,19 @@ app.use("/spaces/:slug", spaceRouter);
 app.get("/questions", async (_req: Request, res: Response) => {
   const sid = await openSpaceId();
   res.json(await dataStore.getQuestions(sid));
+});
+
+/** Legacy open-space route (same pattern as /questions) — /api/trending */
+app.get("/trending", async (_req: Request, res: Response) => {
+  try {
+    const sid = await openSpaceId();
+    res.json(await getTrendingApiPayload(sid));
+  } catch (e) {
+    res.status(500).json({
+      ok: false,
+      error: e instanceof Error ? e.message : String(e),
+    });
+  }
 });
 
 app.get("/submissions", async (_req: Request, res: Response) => {

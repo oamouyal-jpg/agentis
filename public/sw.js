@@ -1,4 +1,4 @@
-const CACHE_NAME = "agentis-v2";
+const CACHE_NAME = "agentis-v3";
 
 self.addEventListener("install", (e) => {
   self.skipWaiting();

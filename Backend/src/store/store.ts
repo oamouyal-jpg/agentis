@@ -119,6 +119,13 @@ export type QuestionComment = {
   liked?: boolean;
 };
 
+/** Persisted “what’s hot” pointer — not calendar-driven; see trending.service.ts */
+export type SpaceTrending = {
+  hotQuestionId: number | null;
+  /** When current hot was promoted (ms since epoch) */
+  hotPromotedAt: number | null;
+};
+
 export type AgentisStore = {
   ensureDefaultSpace(): Promise<void>;
   listSpaces(): Promise<Space[]>;
@@ -243,6 +250,9 @@ export type AgentisStore = {
     spaceId: number,
     petitionId: number
   ): Promise<PetitionSignature[]>;
+
+  getSpaceTrending(spaceId: number): Promise<SpaceTrending | null>;
+  setSpaceTrending(spaceId: number, state: SpaceTrending): Promise<void>;
 };
 
 type DeviceVoteKey = {
@@ -261,10 +271,17 @@ type CommentLikeEntry = {
   deviceId: string;
 };
 
+type SpaceTrendingRow = {
+  spaceId: number;
+  hotQuestionId: number | null;
+  hotPromotedAt: number | null;
+};
+
 type PersistedData = {
   spaces: Space[];
   submissions: Submission[];
   questions: Question[];
+  spaceTrending?: SpaceTrendingRow[];
   voteEvents?: VoteEvent[];
   deviceVotes?: DeviceVoteKey[];
   petitions?: Petition[];
@@ -300,6 +317,7 @@ class FileDataStore implements AgentisStore {
   private questionComments: QuestionComment[] = [];
   private commentLikes: CommentLikeEntry[] = [];
   private voteFlipEvents: VoteFlipEvent[] = [];
+  private spaceTrendingRows: SpaceTrendingRow[] = [];
   private nextSubmissionId = 1;
   private nextQuestionId = 1;
   private nextVoteEventId = 1;
@@ -396,6 +414,10 @@ class FileDataStore implements AgentisStore {
           ? parsed.nextVoteFlipId
           : this.voteFlipEvents.reduce((m, v) => Math.max(m, v.id), 0) + 1;
 
+      this.spaceTrendingRows = Array.isArray(parsed.spaceTrending)
+        ? parsed.spaceTrending
+        : [];
+
       this.migrateLegacy();
       this.ensureDefaultSpaceSync();
 
@@ -413,6 +435,7 @@ class FileDataStore implements AgentisStore {
       this.questionComments = [];
       this.commentLikes = [];
       this.voteFlipEvents = [];
+      this.spaceTrendingRows = [];
       this.nextVoteFlipId = 1;
       this.nextSubmissionId = 1;
       this.nextQuestionId = 1;
@@ -511,6 +534,7 @@ class FileDataStore implements AgentisStore {
       questionComments: this.questionComments,
       commentLikes: this.commentLikes,
       voteFlipEvents: this.voteFlipEvents,
+      spaceTrending: this.spaceTrendingRows,
       nextSubmissionId: this.nextSubmissionId,
       nextQuestionId: this.nextQuestionId,
       nextVoteEventId: this.nextVoteEventId,
@@ -986,6 +1010,30 @@ class FileDataStore implements AgentisStore {
     return this.petitionSignatures.filter(
       (s) => s.spaceId === spaceId && s.petitionId === petitionId
     );
+  }
+
+  async getSpaceTrending(spaceId: number): Promise<SpaceTrending | null> {
+    const row = this.spaceTrendingRows.find((r) => r.spaceId === spaceId);
+    if (!row) return null;
+    return {
+      hotQuestionId: row.hotQuestionId,
+      hotPromotedAt: row.hotPromotedAt,
+    };
+  }
+
+  async setSpaceTrending(spaceId: number, state: SpaceTrending): Promise<void> {
+    const idx = this.spaceTrendingRows.findIndex((r) => r.spaceId === spaceId);
+    const row: SpaceTrendingRow = {
+      spaceId,
+      hotQuestionId: state.hotQuestionId,
+      hotPromotedAt: state.hotPromotedAt,
+    };
+    if (idx >= 0) {
+      this.spaceTrendingRows[idx] = row;
+    } else {
+      this.spaceTrendingRows.push(row);
+    }
+    this.save();
   }
 
   async listQuestionUpdates(

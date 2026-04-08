@@ -42,11 +42,11 @@ export function spaceUrl(slug: string, path: string): string {
   return `${base}${p}`;
 }
 
-export async function spaceFetch(
+/** Headers for space-scoped API calls (invite, host, device). */
+export function buildSpaceRequestHeaders(
   slug: string,
-  path: string,
   init?: RequestInit
-): Promise<Response> {
+): Headers {
   const invite = getInviteForSpace(slug);
   const host = getHostForSpace(slug);
   const headers = new Headers(init?.headers);
@@ -62,8 +62,47 @@ export async function spaceFetch(
       headers.set("X-Space-Device", device);
     }
   }
+  return headers;
+}
+
+export async function spaceFetch(
+  slug: string,
+  path: string,
+  init?: RequestInit
+): Promise<Response> {
+  const headers = buildSpaceRequestHeaders(slug, init);
   return fetch(spaceUrl(slug, path), {
     ...init,
     headers,
+    cache: init?.cache ?? "no-store",
   });
+}
+
+/** Community “what’s hot” + emerging topics — see Backend `trending.service.ts`. */
+export type SpaceTrendingResponse = {
+  ok: true;
+  hot: {
+    question: Record<string, unknown>;
+    metrics: Record<string, unknown>;
+  } | null;
+  emerging: Array<{ question: Record<string, unknown>; metrics: Record<string, unknown> }>;
+  hotUpdated: boolean;
+  reason?: string;
+};
+
+export async function fetchSpaceTrending(slug: string): Promise<SpaceTrendingResponse> {
+  // Always hit /api/spaces/:slug/trending — do not use spaceUrl(), because "open" maps to
+  // legacy /api/* paths and would break trending (see spaceUrl).
+  const url = `${API_BASE}/spaces/${encodeURIComponent(slug)}/trending`;
+  const res = await fetch(url, {
+    cache: "no-store",
+    headers: buildSpaceRequestHeaders(slug),
+  });
+  const data = (await res.json()) as SpaceTrendingResponse & { ok?: boolean; error?: string };
+  if (!res.ok || data.ok !== true) {
+    throw new Error(
+      typeof data.error === "string" ? data.error : `Trending failed (${res.status})`
+    );
+  }
+  return data;
 }

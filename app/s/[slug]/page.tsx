@@ -5,6 +5,7 @@ import { use, useEffect, useState } from "react";
 import { FollowGroupButton } from "../../components/FollowGroupButton";
 import { LanguageSwitcher } from "../../components/LanguageSwitcher";
 import { ShareButton } from "../../components/ShareButton";
+import { SpaceTrendingSection } from "../../components/SpaceTrendingSection";
 import { API_BASE } from "../../../lib/apiBase";
 import { getInviteForSpace, spaceFetch } from "../../../lib/spaceApi";
 
@@ -188,6 +189,8 @@ export default function SpaceHomePage({
             </Link>
           </div>
         </div>
+
+        <SpaceTrendingSection slug={slug} />
 
         <div id="questions" className="mb-6 scroll-mt-24">
           <h3 className="font-display text-lg font-medium text-zinc-50">

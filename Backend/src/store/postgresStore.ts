@@ -7,6 +7,7 @@ import type {
   Question,
   QuestionComment,
   QuestionUpdate,
+  SpaceTrending,
   SubmitVoteResult,
   Submission,
   VoteDemographics,
@@ -290,6 +291,15 @@ export class PostgresDataStore implements AgentisStore {
     `);
     await this.pool.query(`
       ALTER TABLE questions ADD COLUMN IF NOT EXISTS no_means TEXT;
+    `);
+
+    await this.pool.query(`
+      CREATE TABLE IF NOT EXISTS space_trending (
+        space_id INTEGER PRIMARY KEY REFERENCES spaces(id) ON DELETE CASCADE,
+        hot_question_id INTEGER REFERENCES questions(id) ON DELETE SET NULL,
+        hot_promoted_at TIMESTAMPTZ,
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      );
     `);
   }
 
@@ -1199,5 +1209,41 @@ export class PostgresDataStore implements AgentisStore {
     const count = Number(cnt.rows[0]?.c ?? 0);
 
     return { ok: true, count, liked };
+  }
+
+  async getSpaceTrending(spaceId: number): Promise<SpaceTrending | null> {
+    await this.ready;
+    const result = await this.pool.query(
+      `SELECT hot_question_id, hot_promoted_at FROM space_trending WHERE space_id=$1;`,
+      [spaceId]
+    );
+    const r = result.rows[0];
+    if (!r) return null;
+    return {
+      hotQuestionId:
+        r.hot_question_id != null ? Number(r.hot_question_id) : null,
+      hotPromotedAt: r.hot_promoted_at
+        ? Date.parse(String(r.hot_promoted_at))
+        : null,
+    };
+  }
+
+  async setSpaceTrending(spaceId: number, state: SpaceTrending): Promise<void> {
+    await this.ready;
+    await this.pool.query(
+      `INSERT INTO space_trending (space_id, hot_question_id, hot_promoted_at, updated_at)
+       VALUES ($1, $2, $3, NOW())
+       ON CONFLICT (space_id) DO UPDATE SET
+         hot_question_id = EXCLUDED.hot_question_id,
+         hot_promoted_at = EXCLUDED.hot_promoted_at,
+         updated_at = NOW();`,
+      [
+        spaceId,
+        state.hotQuestionId,
+        state.hotPromotedAt != null
+          ? new Date(state.hotPromotedAt).toISOString()
+          : null,
+      ]
+    );
   }
 }
