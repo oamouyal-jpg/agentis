@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { use, useCallback, useEffect, useState } from "react";
+import { SpaceFlowNav } from "../../../components/SpaceFlowNav";
 import { spaceFetch } from "../../../../lib/spaceApi";
 import { API_BASE } from "../../../../lib/apiBase";
 
@@ -274,23 +275,7 @@ export default function SpaceAdminPage({
 
   return (
     <main className="min-h-screen bg-zinc-950 text-zinc-100">
-      <header className="border-b border-zinc-800 bg-zinc-950/90 backdrop-blur-sm">
-        <div className="mx-auto max-w-6xl px-4 py-3 sm:px-6 lg:px-10">
-          <Link
-            href="/"
-            className="font-display text-base font-medium tracking-tight text-zinc-100"
-          >
-            Agentis
-          </Link>
-          <nav className="mt-2 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[11px] sm:gap-x-3 sm:text-xs">
-            <Link href={base} className="font-medium text-zinc-400 transition hover:text-zinc-100">Overview</Link>
-            <Link href={`${base}/submit`} className="font-medium text-zinc-400 transition hover:text-zinc-100">Submit</Link>
-            <Link href={`${base}/admin`} className="font-medium text-zinc-200">Admin</Link>
-            <Link href={`${base}/insights`} className="font-medium text-zinc-400 transition hover:text-zinc-100">Insights</Link>
-            <Link href={`${base}/petitions`} className="font-medium text-zinc-400 transition hover:text-zinc-100">Petitions</Link>
-          </nav>
-        </div>
-      </header>
+      <SpaceFlowNav slug={slug} active="admin" />
 
       <section className="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-12 lg:px-10">
         <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-zinc-500">

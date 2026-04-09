@@ -6,11 +6,16 @@ import type { FormEvent } from "react";
 import { useEffect, useMemo, useState } from "react";
 import { FollowGroupButton } from "./components/FollowGroupButton";
 import { LanguageSwitcher } from "./components/LanguageSwitcher";
-import { ShareButton } from "./components/ShareButton";
-import { PressDeskHero } from "./components/press/PressDeskHero";
-import { SpaceTrendingSection } from "./components/SpaceTrendingSection";
+import { SocialShareButtons } from "./components/SocialShareButtons";
+import { HomeExplainer } from "./components/HomeExplainer";
+import {
+  PressDeskHero,
+  type HeroTrendingEmerging,
+  type HeroTrendingHot,
+} from "./components/press/PressDeskHero";
 import { useI18n } from "../lib/i18n/I18nProvider";
 import { API_BASE } from "../lib/apiBase";
+import { fetchSpaceTrending, type SpaceTrendingResponse } from "../lib/spaceApi";
 import { useMyGroups } from "../lib/useMyGroups";
 
 type SpaceListItem = {
@@ -91,6 +96,12 @@ export default function HomePage() {
   >([]);
   const [openStatsLoading, setOpenStatsLoading] = useState(true);
 
+  const [trendingHot, setTrendingHot] = useState<HeroTrendingHot | null>(null);
+  const [trendingEmerging, setTrendingEmerging] = useState<HeroTrendingEmerging[]>(
+    []
+  );
+  const [trendingLoading, setTrendingLoading] = useState(true);
+
   const [name, setName] = useState("");
   const [slug, setSlug] = useState("");
   const [description, setDescription] = useState("");
@@ -153,6 +164,67 @@ export default function HomePage() {
       }
     }
     loadOpenStats();
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function loadTrending() {
+      try {
+        setTrendingLoading(true);
+        const data: SpaceTrendingResponse = await fetchSpaceTrending("open");
+        if (cancelled) return;
+
+        const emerging: HeroTrendingEmerging[] = [];
+        for (const e of data.emerging ?? []) {
+          const q = e.question as Record<string, unknown>;
+          const id = Number(q.id);
+          if (!Number.isFinite(id)) continue;
+          const m = e.metrics as Record<string, unknown> | undefined;
+          emerging.push({
+            question: { id, title: String(q.title ?? "") },
+            metrics: { risingFast: Boolean(m?.risingFast) },
+          });
+        }
+        setTrendingEmerging(emerging);
+
+        const h = data.hot;
+        if (!h?.question) {
+          setTrendingHot(null);
+          return;
+        }
+        const q = h.question as Record<string, unknown>;
+        const id = Number(q.id);
+        if (!Number.isFinite(id)) {
+          setTrendingHot(null);
+          return;
+        }
+        const m = h.metrics as Record<string, unknown>;
+        setTrendingHot({
+          question: {
+            id,
+            title: String(q.title ?? ""),
+            description:
+              typeof q.description === "string" ? q.description : undefined,
+            imageUrl: typeof q.imageUrl === "string" ? q.imageUrl : undefined,
+          },
+          metrics: {
+            entriesInWindow: Number(m.entriesInWindow) || 0,
+            commentsInWindow: Number(m.commentsInWindow) || 0,
+          },
+        });
+      } catch {
+        if (!cancelled) {
+          setTrendingHot(null);
+          setTrendingEmerging([]);
+        }
+      } finally {
+        if (!cancelled) setTrendingLoading(false);
+      }
+    }
+    void loadTrending();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const { publicSpaces, membersSpaces } = useMemo(() => {
@@ -248,22 +320,24 @@ export default function HomePage() {
             </Link>
             <nav className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] sm:text-xs">
               <Link href="/my-groups" className="font-medium text-zinc-400 transition hover:text-zinc-100">{t("home.myGroupsTitle")}</Link>
-              <ShareButton text="Check out Agentis" />
+              <SocialShareButtons text="Check out Agentis" title="Agentis" />
               <LanguageSwitcher />
             </nav>
           </div>
         </header>
 
         <div className="mx-auto max-w-6xl px-4 pb-24 pt-8 sm:px-6 sm:pt-12 lg:px-10">
+          <HomeExplainer />
           <PressDeskHero
             openQuestionCount={openQuestionCount}
             wireQuestions={wireQuestions}
             statsLoading={openStatsLoading}
             groupCount={loading ? null : spaces.length}
             groupsLoading={loading}
+            trendingHot={trendingHot}
+            trendingEmerging={trendingEmerging}
+            trendingLoading={trendingLoading}
           />
-
-          <SpaceTrendingSection slug="open" />
 
           <section className="mb-6 rounded-sm border border-zinc-800 bg-zinc-900/35 p-4 sm:mb-10 sm:p-8">
             <h2 className="font-display text-lg font-medium text-zinc-50">
@@ -310,15 +384,21 @@ export default function HomePage() {
             </p>
           </section>
 
-          {/* Create — always visible (not tucked away) */}
-          <section
+          <details
             id="create-group"
-            className="mb-6 rounded-sm border border-zinc-800 bg-zinc-900/35 p-4 sm:mb-10 sm:p-8"
+            className="group mb-6 rounded-sm border border-zinc-800 bg-zinc-900/35 sm:mb-10"
           >
-            <h2 className="font-display text-lg font-medium text-zinc-50">
-              {t("home.createTitle")}
-            </h2>
-            <p className="mt-2 max-w-xl text-sm leading-relaxed text-zinc-400">
+            <summary className="cursor-pointer list-none p-4 sm:p-6 [&::-webkit-details-marker]:hidden">
+              <span className="font-display text-lg font-medium text-zinc-200 group-open:text-zinc-50">
+                {t("home.createCollapsedTitle")}
+              </span>
+              <span className="mt-1 block text-sm text-zinc-500">
+                {t("home.createCollapsedHint")}
+              </span>
+            </summary>
+            <div className="border-t border-zinc-800 px-4 pb-6 sm:px-6 sm:pb-8">
+            <h2 className="sr-only">{t("home.createTitle")}</h2>
+            <p className="mt-4 max-w-xl text-sm leading-relaxed text-zinc-400">
               {t("home.createBody")}
             </p>
             <form onSubmit={handleCreate} className="mt-6 max-w-lg space-y-4 sm:mt-8">
@@ -385,7 +465,8 @@ export default function HomePage() {
                 {createMsg}
               </p>
             )}
-          </section>
+            </div>
+          </details>
 
           {/* Spaces — primary content, full width */}
           <section className="mb-10">

@@ -1,6 +1,9 @@
 /**
  * Base URL/path for API calls from the browser.
  *
+ * - **`next dev` + default `"/api"`** — Next.js proxies `/api/*` to the Backend dev server
+ *   (`http://127.0.0.1:4000` by default). Start Backend: `npm run dev:backend`.
+ *
  * - **Default** `"/api"` — same origin as the combined `server.js` app (Render, local `node server.js`).
  * - **Production absolute URL** — often set to `https://your-app.onrender.com` **without** `/api`.
  *   That breaks all fetches; we append `/api` when the host is not localhost.

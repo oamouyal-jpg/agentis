@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { ShareButton } from "../components/ShareButton";
+import { SocialShareButtons } from "../components/SocialShareButtons";
 import { API_BASE } from "../../lib/apiBase";
 
 export default function SubmitPage() {
@@ -74,7 +74,7 @@ export default function SubmitPage() {
           </Link>
           <nav className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] sm:text-xs">
             <Link href="/" className="font-medium text-zinc-400 transition hover:text-zinc-100">Home</Link>
-            <ShareButton text="Share your concern on Agentis" />
+            <SocialShareButtons text="Share your concern on Agentis" title="Agentis" />
           </nav>
         </div>
       </header>

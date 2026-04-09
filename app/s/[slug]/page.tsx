@@ -4,7 +4,8 @@ import Link from "next/link";
 import { use, useEffect, useState } from "react";
 import { FollowGroupButton } from "../../components/FollowGroupButton";
 import { LanguageSwitcher } from "../../components/LanguageSwitcher";
-import { ShareButton } from "../../components/ShareButton";
+import { SocialShareButtons } from "../../components/SocialShareButtons";
+import { SpaceFlowNav } from "../../components/SpaceFlowNav";
 import { SpaceTrendingSection } from "../../components/SpaceTrendingSection";
 import { API_BASE } from "../../../lib/apiBase";
 import { getInviteForSpace, spaceFetch } from "../../../lib/spaceApi";
@@ -111,44 +112,27 @@ export default function SpaceHomePage({
 
   return (
     <main className="min-h-screen bg-zinc-950 text-zinc-100">
-      <header className="border-b border-zinc-800 bg-zinc-950/90 backdrop-blur-sm">
-        <div className="mx-auto max-w-6xl px-4 py-3 sm:px-6 lg:px-10">
-          <div className="flex items-center gap-2">
-            {branding?.logoUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element -- org logos can be on any host (https only)
-              <img
-                src={branding.logoUrl}
-                alt=""
-                className="h-6 w-6 rounded border border-zinc-800 bg-zinc-950 object-contain"
-              />
-            ) : null}
-            <Link
-              href="/"
-              className="font-display text-base font-medium tracking-tight text-zinc-100"
-            >
-              Agentis
-            </Link>
-            <span className="text-zinc-700">/</span>
-            <h1
-              className="truncate text-sm font-medium text-zinc-400"
-              style={
-                branding?.accentColor ? { color: branding.accentColor } : undefined
-              }
-            >
-              {spaceName}
-            </h1>
-          </div>
-
-          <nav className="mt-2 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[11px] sm:gap-x-3 sm:text-xs">
-            <Link href={`${base}/submit`} className="font-medium text-zinc-400 transition hover:text-zinc-100">Submit</Link>
-            <Link href={`${base}/insights`} className="font-medium text-zinc-400 transition hover:text-zinc-100">Insights</Link>
-            <Link href="/my-groups" className="hidden font-medium text-zinc-400 transition hover:text-zinc-100 sm:inline">My groups</Link>
-            <Link href={`${base}/admin`} className="hidden font-medium text-zinc-400 transition hover:text-zinc-100 sm:inline">Admin</Link>
-            <ShareButton title={spaceName} text={`Join ${spaceName} on Agentis`} />
+      <SpaceFlowNav
+        slug={slug}
+        spaceName={spaceName}
+        active="group"
+        branding={branding}
+        extras={
+          <>
+            <SocialShareButtons
+              title={spaceName}
+              text={`Join ${spaceName} on Agentis`}
+            />
             <LanguageSwitcher />
-          </nav>
-        </div>
-      </header>
+            <Link
+              href="/my-groups"
+              className="hidden text-xs font-medium text-zinc-400 transition hover:text-zinc-100 sm:inline"
+            >
+              My groups
+            </Link>
+          </>
+        }
+      />
 
       <section className="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-12 lg:px-10">
         <div className="mb-10 border-b border-zinc-800 pb-8">

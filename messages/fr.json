@@ -7,10 +7,16 @@
     "language": "Langue"
   },
   "hero": {
-    "mastheadSub": "Groupes · Signal civique",
+    "mastheadSub": "On écrit des préoccupations courtes. Elles deviennent des questions oui/non. Tout le monde voit les comptes.",
     "leadKicker": "À la une",
-    "leadTitle": "L'histoire, ce n'est pas le bruit — c'est ce qui revient quand on écoute.",
-    "leadBody": "Agentis aide les groupes à transformer leurs préoccupations en questions claires, puis utilise des votes simples pour montrer où les gens se situent — avec du contexte, pas des suppositions.",
+    "trendingKicker": "Tendance actuelle",
+    "leadTitle": "De quoi devrait-on parler ?",
+    "leadBody": "Soumettez une préoccupation, votez sur des questions claires et voyez où en est le groupe — des sujets réels, pas du bruit.",
+    "inviteSubtitle": "Donnez votre avis — votez oui ou non, rejoignez la discussion et influencez ce qui se dit.",
+    "emergingLabel": "Ça monte aussi",
+    "voteNow": "Voter sur ce sujet",
+    "statActivity": "Activité cette semaine",
+    "voicesRecent": "personnes s'expriment récemment",
     "openDesk": "Ouvrir le groupe",
     "fileConcern": "Faites-vous entendre",
     "statQuestions": "Questions actives",
@@ -28,19 +34,11 @@
     "editorialSub": "Utilisez-les lors de vos soumissions ou pour briefer un hôte — elles précisent le propos.",
     "fallbackWire": [
       {
-        "title": "Quel est le premier sujet à soumettre au vote ?",
+        "title": "Écrire une préoccupation qui touche votre communauté",
         "href": "/s/open/submit"
       },
       {
-        "title": "Où est l'écart entre ce que les gens ressentent et ce que les dirigeants entendent ?",
-        "href": "/s/open/submit"
-      },
-      {
-        "title": "Quelle préoccupation revient sans cesse dans votre quartier ?",
-        "href": "/s/open/submit"
-      },
-      {
-        "title": "Ouvrez le groupe public — voyez les questions se former.",
+        "title": "Ouvrir le groupe public et voter sur une question",
         "href": "/s/open"
       }
     ],
@@ -52,6 +50,14 @@
     ]
   },
   "home": {
+    "explainerTitle": "Qu'est-ce qu'Agentis ?",
+    "explainerOneLiner": "Un outil simple pour les groupes : écrire des préoccupations, voter oui ou non sur des questions claires, et voir où en est le groupe — au même endroit.",
+    "explainerStepSummary1": "Écrire une préoccupation",
+    "explainerStepSummary2": "Fusionner en une question",
+    "explainerStepSummary3": "Voter oui ou non",
+    "explainerStep1": "Quelqu'un dans le groupe écrit une courte préoccupation — comme une note à la salle.",
+    "explainerStep2": "Les messages proches sont regroupés en une seule question pour que tout le monde vote sur la même chose.",
+    "explainerStep3": "Chaque question a un oui et un non. Votes et commentaires restent sur cette page.",
     "getStartedTitle": "Pour commencer",
     "getStartedBody": "Ouvrez le groupe public par défaut, utilisez un lien qu'on vous a donné, ou entrez le nom du groupe depuis votre URL.",
     "enterPublicGroup": "Entrer dans le groupe public",
@@ -59,6 +65,8 @@
     "go": "Aller",
     "inviteOnlyHint": "Groupes sur invitation : utilisez le lien de votre hôte (accès inclus).",
     "hostingPrefix": "Vous hébergez un groupe ?",
+    "createCollapsedTitle": "Créer un nouveau groupe (organisateurs)",
+    "createCollapsedHint": "Seulement si vous pilotez une équipe ou une campagne. Sinon utilisez « Pour commencer » ci-dessus.",
     "createGroupLink": "Créer un groupe",
     "myGroupsTitle": "Mes groupes",
     "myGroupsBody": "Raccourcis enregistrés dans ce navigateur. Utilisez « Sauvegarder dans Mes groupes » dans un groupe ou sur une carte ci-dessous.",

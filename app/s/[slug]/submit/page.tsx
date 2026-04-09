@@ -1,9 +1,9 @@
 "use client";
 
-import Link from "next/link";
 import type { FormEvent } from "react";
 import { use, useState } from "react";
-import { ShareButton } from "../../../components/ShareButton";
+import { SocialShareButtons } from "../../../components/SocialShareButtons";
+import { SpaceFlowNav } from "../../../components/SpaceFlowNav";
 import { spaceFetch } from "../../../../lib/spaceApi";
 
 export default function SpaceSubmitPage({
@@ -15,7 +15,6 @@ export default function SpaceSubmitPage({
   const [text, setText] = useState("");
   const [message, setMessage] = useState("");
   const [submitting, setSubmitting] = useState(false);
-  const base = `/s/${encodeURIComponent(slug)}`;
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -71,20 +70,16 @@ export default function SpaceSubmitPage({
 
   return (
     <main className="min-h-screen bg-zinc-950 text-zinc-100">
-      <header className="border-b border-zinc-800 bg-zinc-950/90 backdrop-blur-sm">
-        <div className="mx-auto max-w-6xl px-4 py-3 sm:px-6 lg:px-10">
-          <Link
-            href="/"
-            className="font-display text-base font-medium tracking-tight text-zinc-100"
-          >
-            Agentis
-          </Link>
-          <nav className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] sm:text-xs">
-            <Link href={base} className="font-medium text-zinc-400 transition hover:text-zinc-100">Back to group</Link>
-            <ShareButton text="Share your concern on Agentis" />
-          </nav>
-        </div>
-      </header>
+      <SpaceFlowNav
+        slug={slug}
+        active="submit"
+        extras={
+          <SocialShareButtons
+            text={`Raise a concern on Agentis · ${slug}`}
+            title="Agentis"
+          />
+        }
+      />
 
       <section className="mx-auto max-w-3xl px-6 py-12 lg:px-10">
         <div className="mb-8 border-b border-zinc-800 pb-6">

@@ -101,8 +101,11 @@ export function I18nProvider({ children }: { children: ReactNode }) {
 
   const t = useCallback(
     (key: string, vars?: Record<string, string>) => {
-      const tree = messagesByLocale[locale];
-      const raw = getNested(tree, key);
+      const tree = messagesByLocale[locale] ?? messagesByLocale.en;
+      let raw = getNested(tree, key);
+      if (raw === undefined && locale !== "en") {
+        raw = getNested(messagesByLocale.en, key);
+      }
       if (typeof raw === "string") {
         return applyVars(raw, vars);
       }

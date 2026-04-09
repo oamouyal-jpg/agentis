@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
 import { useI18n } from "../../../lib/i18n/I18nProvider";
 import type { AppLocale } from "../../../lib/i18n/config";
 import { messagesByLocale } from "../../../lib/i18n/messages";
@@ -16,11 +16,6 @@ const IMG = {
     "https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=600&h=400&fit=crop&q=80&auto=format",
     "https://images.unsplash.com/photo-1495020689067-958852a7765e?w=600&h=400&fit=crop&q=80&auto=format",
   ],
-  field: [
-    "https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=500&h=500&fit=crop&q=80&auto=format",
-    "https://images.unsplash.com/photo-1573164713714-d95e436ab8d6?w=500&h=500&fit=crop&q=80&auto=format",
-    "https://images.unsplash.com/photo-1557804506-669a67965ba0?w=500&h=500&fit=crop&q=80&auto=format",
-  ],
 } as const;
 
 type HeroCopy = {
@@ -31,12 +26,6 @@ type HeroCopy = {
 function heroForLocale(locale: AppLocale): HeroCopy {
   const h = messagesByLocale[locale].hero as unknown as HeroCopy;
   return h;
-}
-
-function dateLocaleFor(locale: AppLocale): string {
-  if (locale === "he") return "he-IL";
-  if (locale === "es") return "es";
-  return "en-GB";
 }
 
 function WireThumb({ src }: { src: string }) {
@@ -64,13 +53,67 @@ function WireThumb({ src }: { src: string }) {
 
 type WireItem = { id: number; title: string; imageUrl?: string };
 
+export type HeroTrendingHot = {
+  question: {
+    id: number;
+    title: string;
+    description?: string;
+    imageUrl?: string;
+  };
+  metrics: {
+    entriesInWindow: number;
+    commentsInWindow: number;
+  };
+};
+
+export type HeroTrendingEmerging = {
+  question: { id: number; title: string };
+  metrics: { risingFast?: boolean };
+};
+
 type Props = {
   openQuestionCount: number | null;
   wireQuestions: WireItem[];
   statsLoading: boolean;
   groupCount: number | null;
   groupsLoading: boolean;
+  trendingHot: HeroTrendingHot | null;
+  trendingEmerging: HeroTrendingEmerging[];
+  trendingLoading: boolean;
 };
+
+function LeadHeroVisual({
+  src,
+  alt,
+  caption,
+}: {
+  src: string;
+  alt: string;
+  caption: string;
+}) {
+  const unsplash = src.includes("images.unsplash.com");
+  return (
+    <div className="relative aspect-[16/10] overflow-hidden rounded-sm bg-zinc-900">
+      {unsplash ? (
+        <Image
+          src={src}
+          alt={alt}
+          fill
+          className="object-cover"
+          sizes="(max-width: 1024px) 100vw, 58vw"
+          priority
+        />
+      ) : (
+        // eslint-disable-next-line @next/next/no-img-element -- question hero images (any HTTPS host)
+        <img src={src} alt={alt} className="absolute inset-0 h-full w-full object-cover" />
+      )}
+      <div className="absolute inset-0 bg-gradient-to-t from-zinc-950/95 via-zinc-950/30 to-transparent" />
+      <p className="absolute bottom-5 start-5 end-5 font-display text-lg font-medium italic leading-snug text-white sm:text-xl sm:leading-relaxed">
+        {caption}
+      </p>
+    </div>
+  );
+}
 
 export function PressDeskHero({
   openQuestionCount,
@@ -78,22 +121,13 @@ export function PressDeskHero({
   statsLoading,
   groupCount,
   groupsLoading,
+  trendingHot,
+  trendingEmerging,
+  trendingLoading,
 }: Props) {
   const { locale, t } = useI18n();
-  const [dateLine, setDateLine] = useState("");
 
   const hero = useMemo(() => heroForLocale(locale), [locale]);
-
-  useEffect(() => {
-    setDateLine(
-      new Intl.DateTimeFormat(dateLocaleFor(locale), {
-        weekday: "long",
-        day: "numeric",
-        month: "long",
-        year: "numeric",
-      }).format(new Date())
-    );
-  }, [locale]);
 
   const wireItems =
     wireQuestions.length > 0
@@ -113,45 +147,127 @@ export function PressDeskHero({
           image: IMG.wire[i % IMG.wire.length],
         }));
 
+  const hot = trendingHot;
+  const leadImgSrc =
+    hot?.question.imageUrl?.startsWith("https://") && hot.question.imageUrl
+      ? hot.question.imageUrl
+      : IMG.lead;
+
+  const imageCaption = hot
+    ? `${hot.metrics.entriesInWindow} ${t("hero.voicesRecent")}`
+    : t("hero.leadCaption");
+
+  const emergingShow = trendingEmerging.slice(0, 3);
+
   return (
     <div className="mb-10 border-b border-zinc-800 pb-10 sm:mb-16 sm:pb-16">
-      <div className="mb-6 flex flex-col gap-2 border-b border-zinc-800 pb-4 sm:mb-10 sm:flex-row sm:items-end sm:justify-between sm:pb-6">
-        <div>
-          <p className="font-display text-xl font-medium tracking-tight text-zinc-100 sm:text-3xl">
-            {t("common.agentis")}
-          </p>
-          <p className="mt-1 text-[10px] font-medium uppercase tracking-[0.25em] text-zinc-500 sm:text-[11px]">
-            {t("hero.mastheadSub")}
-          </p>
-        </div>
-        <p className="font-mono text-[10px] text-zinc-600 sm:text-xs">{dateLine || "—"}</p>
+      <div className="mb-6 border-b border-zinc-800 pb-4 sm:mb-10 sm:pb-6">
+        <p className="font-display text-xl font-medium tracking-tight text-zinc-100 sm:text-3xl">
+          {t("common.agentis")}
+        </p>
+        <p className="mt-2 max-w-xl text-sm leading-relaxed text-zinc-500">
+          {t("hero.mastheadSub")}
+        </p>
       </div>
 
       <div className="grid gap-6 sm:gap-10 lg:grid-cols-12 lg:gap-12">
         <div className="lg:col-span-5">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-red-400/90">
-            {t("hero.leadKicker")}
-          </p>
-          <h1 className="font-display mt-3 text-2xl font-medium leading-[1.15] tracking-tight text-zinc-50 sm:text-4xl lg:text-[2.35rem] lg:leading-[1.1]">
-            {t("hero.leadTitle")}
-          </h1>
-          <p className="mt-5 text-sm leading-relaxed text-zinc-400 sm:text-[15px]">
-            {t("hero.leadBody")}
-          </p>
-          <div className="mt-8 flex flex-wrap gap-3">
-            <Link
-              href="/s/open"
-              className="rounded-sm bg-zinc-100 px-5 py-2.5 text-sm font-medium text-zinc-950 transition hover:bg-white"
-            >
-              {t("hero.openDesk")}
-            </Link>
-            <Link
-              href="/s/open/submit"
-              className="rounded-sm border border-zinc-600 px-5 py-2.5 text-sm font-medium text-zinc-200 transition hover:border-zinc-500 hover:bg-zinc-900"
-            >
-              {t("hero.fileConcern")}
-            </Link>
-          </div>
+          {trendingLoading ? (
+            <div className="space-y-4 animate-pulse" aria-busy="true">
+              <div className="h-3 w-24 rounded bg-zinc-800" />
+              <div className="h-10 w-full max-w-md rounded bg-zinc-800" />
+              <div className="h-4 w-full rounded bg-zinc-800/80" />
+              <div className="h-4 w-5/6 rounded bg-zinc-800/60" />
+            </div>
+          ) : hot ? (
+            <>
+              <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-amber-500/95">
+                {t("hero.trendingKicker")}
+              </p>
+              <h1 className="font-display mt-3 text-2xl font-medium leading-[1.2] tracking-tight text-zinc-50 sm:text-3xl lg:text-[2rem] lg:leading-[1.15]">
+                {hot.question.title}
+              </h1>
+              {hot.question.description ? (
+                <p className="mt-4 line-clamp-3 text-sm leading-relaxed text-zinc-400 sm:text-[15px]">
+                  {hot.question.description}
+                </p>
+              ) : null}
+              <p className="mt-5 text-sm leading-relaxed text-zinc-300 sm:text-[15px]">
+                {t("hero.inviteSubtitle")}
+              </p>
+              <div className="mt-8 flex flex-wrap gap-3">
+                <Link
+                  href={`/s/open/questions/${hot.question.id}`}
+                  className="rounded-sm bg-zinc-100 px-5 py-2.5 text-sm font-medium text-zinc-950 transition hover:bg-white"
+                >
+                  {t("hero.voteNow")}
+                </Link>
+                <Link
+                  href="/s/open/submit"
+                  className="rounded-sm border border-zinc-600 px-5 py-2.5 text-sm font-medium text-zinc-200 transition hover:border-zinc-500 hover:bg-zinc-900"
+                >
+                  {t("hero.fileConcern")}
+                </Link>
+                <Link
+                  href="/s/open"
+                  className="rounded-sm border border-dashed border-zinc-700 px-5 py-2.5 text-sm font-medium text-zinc-400 transition hover:border-zinc-600 hover:text-zinc-200"
+                >
+                  {t("hero.openDesk")}
+                </Link>
+              </div>
+              {emergingShow.length > 0 ? (
+                <div className="mt-8 border-t border-zinc-800 pt-6">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-zinc-500">
+                    {t("hero.emergingLabel")}
+                  </p>
+                  <ul className="mt-3 space-y-2">
+                    {emergingShow.map((e) => (
+                      <li key={e.question.id}>
+                        <Link
+                          href={`/s/open/questions/${e.question.id}`}
+                          className="group flex items-start gap-2 text-sm leading-snug text-zinc-300 transition hover:text-white"
+                        >
+                          <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-amber-600/90" />
+                          <span className="group-hover:underline">{e.question.title}</span>
+                          {e.metrics.risingFast ? (
+                            <span className="ml-auto shrink-0 rounded bg-zinc-800 px-2 py-0.5 text-[10px] font-medium uppercase text-amber-400/90">
+                              ↑
+                            </span>
+                          ) : null}
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ) : null}
+            </>
+          ) : (
+            <>
+              <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-zinc-500">
+                {t("hero.leadKicker")}
+              </p>
+              <h1 className="font-display mt-3 text-2xl font-medium leading-[1.15] tracking-tight text-zinc-50 sm:text-4xl lg:text-[2.35rem] lg:leading-[1.1]">
+                {t("hero.leadTitle")}
+              </h1>
+              <p className="mt-5 text-sm leading-relaxed text-zinc-400 sm:text-[15px]">
+                {t("hero.leadBody")}
+              </p>
+              <div className="mt-8 flex flex-wrap gap-3">
+                <Link
+                  href="/s/open"
+                  className="rounded-sm bg-zinc-100 px-5 py-2.5 text-sm font-medium text-zinc-950 transition hover:bg-white"
+                >
+                  {t("hero.openDesk")}
+                </Link>
+                <Link
+                  href="/s/open/submit"
+                  className="rounded-sm border border-zinc-600 px-5 py-2.5 text-sm font-medium text-zinc-200 transition hover:border-zinc-500 hover:bg-zinc-900"
+                >
+                  {t("hero.fileConcern")}
+                </Link>
+              </div>
+            </>
+          )}
           <dl className="mt-6 grid grid-cols-2 gap-x-4 gap-y-4 border-t border-zinc-800 pt-6 sm:mt-10 sm:gap-y-6 sm:pt-8 md:grid-cols-3">
             <div>
               <dt className="text-[10px] font-medium uppercase tracking-wider text-zinc-500">
@@ -171,30 +287,27 @@ export function PressDeskHero({
             </div>
             <div className="col-span-2 md:col-span-1">
               <dt className="text-[10px] font-medium uppercase tracking-wider text-zinc-500">
-                {t("hero.statFormat")}
+                {hot ? t("hero.statActivity") : t("hero.statFormat")}
               </dt>
               <dd className="mt-1 text-sm text-zinc-400">
-                {t("hero.statFormatValue")}
+                {hot ? (
+                  <span className="font-display text-2xl font-medium tabular-nums text-zinc-100">
+                    {hot.metrics.entriesInWindow}
+                  </span>
+                ) : (
+                  t("hero.statFormatValue")
+                )}
               </dd>
             </div>
           </dl>
         </div>
 
         <div className="relative lg:col-span-7">
-          <div className="relative aspect-[16/10] overflow-hidden rounded-sm bg-zinc-900">
-            <Image
-              src={IMG.lead}
-              alt={t("hero.leadImageAlt")}
-              fill
-              className="object-cover"
-              sizes="(max-width: 1024px) 100vw, 58vw"
-              priority
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-zinc-950/95 via-zinc-950/30 to-transparent" />
-            <p className="absolute bottom-5 start-5 end-5 font-display text-lg font-medium italic leading-snug text-white sm:text-xl sm:leading-relaxed">
-              {t("hero.leadCaption")}
-            </p>
-          </div>
+          <LeadHeroVisual
+            src={leadImgSrc}
+            alt={t("hero.leadImageAlt")}
+            caption={imageCaption}
+          />
         </div>
       </div>
 
@@ -225,52 +338,6 @@ export function PressDeskHero({
         </div>
       </div>
 
-      <div className="mt-8 grid gap-6 sm:mt-14 sm:gap-10 lg:grid-cols-12">
-        <div className="lg:col-span-7">
-          <h2 className="font-display text-lg font-medium text-zinc-100">
-            {t("hero.fieldTitle")}
-          </h2>
-          <p className="mt-1 text-xs text-zinc-500">{t("hero.fieldSub")}</p>
-          <div className="mt-4 grid grid-cols-3 gap-2">
-            {IMG.field.map((src, i) => (
-              <div
-                key={src}
-                className="relative aspect-square overflow-hidden rounded-sm bg-zinc-900"
-              >
-                <Image
-                  src={src}
-                  alt=""
-                  fill
-                  className="object-cover"
-                  sizes="(max-width: 1024px) 33vw, 18vw"
-                />
-                <span className="absolute bottom-1 end-1 rounded bg-zinc-950/80 px-1 font-mono text-[8px] text-zinc-500">
-                  {i + 1}
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
-        <div className="rounded-sm border border-zinc-800 bg-zinc-900/30 p-4 sm:p-6 lg:col-span-5">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-amber-200/80">
-            {t("hero.editorialKicker")}
-          </p>
-          <p className="mt-2 text-xs text-zinc-500">{t("hero.editorialSub")}</p>
-          <ol className="mt-5 space-y-4 border-t border-zinc-800 pt-5">
-            {hero.prompts.map((p, i) => (
-              <li
-                key={`${locale}-${i}`}
-                className="flex gap-3 text-sm leading-relaxed text-zinc-300"
-              >
-                <span className="font-display text-lg font-medium text-zinc-600">
-                  {i + 1}.
-                </span>
-                <span>{p}</span>
-              </li>
-            ))}
-          </ol>
-        </div>
-      </div>
     </div>
   );
 }

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { use, useEffect, useMemo, useState } from "react";
 import { QuestionDiscussion } from "../../components/QuestionDiscussion";
-import { ShareLinkButton } from "../../components/ShareLinkButton";
+import { SocialShareButtons } from "../../components/SocialShareButtons";
 import { API_BASE } from "../../../lib/apiBase";
 import { getOrCreateDeviceId } from "../../../lib/deviceId";
 import { SITE_URL } from "../../../lib/siteUrl";
@@ -297,7 +297,11 @@ export default function QuestionDetailPage({
               <p className="mb-2 text-xs font-medium uppercase tracking-wide text-zinc-500">
                 Share
               </p>
-              <ShareLinkButton url={sharePageUrl} />
+              <SocialShareButtons
+                title={question.title}
+                text={`Vote on: ${question.title}`}
+                url={sharePageUrl}
+              />
             </div>
 
             <div className="mt-8 grid gap-4 lg:grid-cols-2">
