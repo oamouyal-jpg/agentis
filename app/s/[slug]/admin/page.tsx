@@ -12,6 +12,8 @@ type Question = {
   imageUrl?: string;
   yesMeans?: string;
   noMeans?: string;
+  yesButtonLabel?: string;
+  noButtonLabel?: string;
 };
 
 type Petition = {
@@ -37,6 +39,10 @@ export default function SpaceAdminPage({
     Record<number, { yes: string; no: string }>
   >({});
   const [savingClarifierId, setSavingClarifierId] = useState<number | null>(null);
+  const [voteButtonDrafts, setVoteButtonDrafts] = useState<
+    Record<number, { yes: string; no: string }>
+  >({});
+  const [savingVoteButtonsId, setSavingVoteButtonsId] = useState<number | null>(null);
   const [petitions, setPetitions] = useState<Petition[]>([]);
   const [loadingPetitions, setLoadingPetitions] = useState(true);
   const [creatingPetition, setCreatingPetition] = useState(false);
@@ -63,6 +69,8 @@ export default function SpaceAdminPage({
           imageUrl: q.imageUrl,
           yesMeans: q.yesMeans,
           noMeans: q.noMeans,
+          yesButtonLabel: q.yesButtonLabel,
+          noButtonLabel: q.noButtonLabel,
         }))
       );
       setDrafts((prev) => {
@@ -81,6 +89,18 @@ export default function SpaceAdminPage({
             next[q.id] = {
               yes: q.yesMeans ?? "",
               no: q.noMeans ?? "",
+            };
+          }
+        }
+        return next;
+      });
+      setVoteButtonDrafts((prev) => {
+        const next = { ...prev };
+        for (const q of data as Question[]) {
+          if (next[q.id] === undefined) {
+            next[q.id] = {
+              yes: q.yesButtonLabel ?? "",
+              no: q.noButtonLabel ?? "",
             };
           }
         }
@@ -155,6 +175,32 @@ export default function SpaceAdminPage({
       setMessage(e instanceof Error ? e.message : "Save branding failed");
     } finally {
       setSavingBranding(false);
+    }
+  }
+
+  async function saveVoteButtons(questionId: number) {
+    const d = voteButtonDrafts[questionId] ?? { yes: "", no: "" };
+    try {
+      setSavingVoteButtonsId(questionId);
+      setMessage("");
+      const res = await spaceFetch(slug, `/questions/${questionId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          yesButtonLabel: d.yes.trim() === "" ? null : d.yes,
+          noButtonLabel: d.no.trim() === "" ? null : d.no,
+        }),
+      });
+      const text = await res.text();
+      if (!res.ok) {
+        throw new Error(text || "Save failed");
+      }
+      await loadQuestions();
+      setMessage("Vote button labels saved.");
+    } catch (e) {
+      setMessage(e instanceof Error ? e.message : "Save failed");
+    } finally {
+      setSavingVoteButtonsId(null);
     }
   }
 
@@ -572,6 +618,72 @@ export default function SpaceAdminPage({
                       />
                     </div>
                   ) : null}
+
+                  <div className="mt-8 border-t border-zinc-800 pt-8">
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-zinc-500">
+                      Vote buttons (short)
+                    </p>
+                    <p className="mt-2 text-sm text-zinc-500">
+                      Text on the two main actions. Leave blank to use{" "}
+                      <span className="text-zinc-400">Interested</span> /{" "}
+                      <span className="text-zinc-400">Not interested</span> (votes
+                      are still stored as yes/no).
+                    </p>
+                    <div className="mt-4 grid gap-4 sm:grid-cols-2">
+                      <div>
+                        <label className="block text-[10px] font-medium uppercase tracking-wider text-zinc-500">
+                          Yes-action label
+                        </label>
+                        <input
+                          value={
+                            voteButtonDrafts[q.id]?.yes ?? q.yesButtonLabel ?? ""
+                          }
+                          onChange={(e) =>
+                            setVoteButtonDrafts((prev) => ({
+                              ...prev,
+                              [q.id]: {
+                                yes: e.target.value,
+                                no: prev[q.id]?.no ?? q.noButtonLabel ?? "",
+                              },
+                            }))
+                          }
+                          placeholder="Interested"
+                          maxLength={48}
+                          className="mt-2 w-full rounded-md border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-200 placeholder:text-zinc-600 focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[10px] font-medium uppercase tracking-wider text-zinc-500">
+                          No-action label
+                        </label>
+                        <input
+                          value={
+                            voteButtonDrafts[q.id]?.no ?? q.noButtonLabel ?? ""
+                          }
+                          onChange={(e) =>
+                            setVoteButtonDrafts((prev) => ({
+                              ...prev,
+                              [q.id]: {
+                                yes: prev[q.id]?.yes ?? q.yesButtonLabel ?? "",
+                                no: e.target.value,
+                              },
+                            }))
+                          }
+                          placeholder="Not interested"
+                          maxLength={48}
+                          className="mt-2 w-full rounded-md border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-200 placeholder:text-zinc-600 focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-500"
+                        />
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      disabled={savingVoteButtonsId === q.id}
+                      onClick={() => saveVoteButtons(q.id)}
+                      className="mt-4 rounded-md border border-zinc-600 bg-zinc-900 px-4 py-2 text-sm font-medium text-zinc-200 hover:bg-zinc-800 disabled:opacity-50"
+                    >
+                      {savingVoteButtonsId === q.id ? "Saving…" : "Save button labels"}
+                    </button>
+                  </div>
 
                   <div className="mt-8 border-t border-zinc-800 pt-8">
                     <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-zinc-500">

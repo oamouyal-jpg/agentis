@@ -180,13 +180,65 @@ app.get("/spaces/:slug", loadSpaceBySlug, async (_req: Request, res: Response) =
   res.json(publicSpace(space));
 });
 
+/**
+ * Same character rules as parseDeviceId so GET /questions and POST /vote
+ * always refer to the same device id (avoids mismatched myVote).
+ */
+function readDeviceIdForAttach(req: Request): string {
+  const raw = req.get("X-Space-Device");
+  const trimmed = typeof raw === "string" ? raw.trim() : "";
+  if (!trimmed || trimmed.length > 128) return "";
+  if (!/^[a-zA-Z0-9_-]+$/.test(trimmed)) return "";
+  return trimmed;
+}
+
+function questionWithMyVotePayload(
+  q: Question,
+  currentVote: "yes" | "no",
+  canChangeVote: boolean
+): Question {
+  return {
+    ...q,
+    myVote: currentVote,
+    myVoteChangeExhausted: !canChangeVote,
+  };
+}
+
+/** Merge per-device vote state into question list (fixes client-only localStorage drift). */
+async function attachDeviceVotesToQuestions(
+  questions: Question[],
+  spaceId: number,
+  deviceId: string
+): Promise<Question[]> {
+  if (!deviceId) return questions;
+  const states = await dataStore.getDeviceVoteStatesForSpace(spaceId, deviceId);
+  return questions.map((q) => {
+    const s = states.get(q.id);
+    if (!s) {
+      const { myVote: _a, myVoteChangeExhausted: _b, ...rest } = q as Question & {
+        myVote?: unknown;
+        myVoteChangeExhausted?: unknown;
+      };
+      return rest as Question;
+    }
+    return {
+      ...q,
+      myVote: s.vote,
+      myVoteChangeExhausted: s.changeUsed,
+    };
+  });
+}
+
 const spaceRouter = express.Router({ mergeParams: true });
 spaceRouter.use(loadSpaceBySlug);
 spaceRouter.use(requireSpaceAccess);
 
-spaceRouter.get("/questions", async (_req: Request, res: Response) => {
+spaceRouter.get("/questions", async (req: Request, res: Response) => {
   const spaceId = res.locals.spaceId as number;
-  res.json(await dataStore.getQuestions(spaceId));
+  const deviceId = readDeviceIdForAttach(req);
+  let questions = await dataStore.getQuestions(spaceId);
+  questions = await attachDeviceVotesToQuestions(questions, spaceId, deviceId);
+  res.json(questions);
 });
 
 /** What’s hot + emerging topics from submissions/comments (see trending.service.ts). */
@@ -397,6 +449,15 @@ function normalizeVoteMeaning(raw: unknown): string | undefined {
   return s;
 }
 
+/** Short vote button copy; null/empty clears to use app defaults. Max 48 chars. */
+function normalizeVoteButtonLabel(raw: unknown): string | undefined {
+  if (raw === null || raw === "") return undefined;
+  if (typeof raw !== "string") return undefined;
+  const s = raw.trim();
+  if (!s) return undefined;
+  return s.slice(0, 48);
+}
+
 spaceRouter.patch(
   "/questions/:questionId",
   writeLimiter,
@@ -412,6 +473,8 @@ spaceRouter.patch(
         imageUrl?: unknown;
         yesMeans?: unknown;
         noMeans?: unknown;
+        yesButtonLabel?: unknown;
+        noButtonLabel?: unknown;
       };
 
       const updates: Partial<Omit<Question, "id" | "spaceId">> = {};
@@ -449,10 +512,43 @@ spaceRouter.patch(
         updates.noMeans = v;
       }
 
+      if ("yesButtonLabel" in body) {
+        const v = normalizeVoteButtonLabel(body.yesButtonLabel);
+        if (
+          body.yesButtonLabel !== null &&
+          body.yesButtonLabel !== "" &&
+          v === undefined
+        ) {
+          return res.status(400).json({
+            ok: false,
+            error:
+              "yesButtonLabel must be a short string (max 48 characters) or empty to clear",
+          });
+        }
+        updates.yesButtonLabel = v;
+      }
+
+      if ("noButtonLabel" in body) {
+        const v = normalizeVoteButtonLabel(body.noButtonLabel);
+        if (
+          body.noButtonLabel !== null &&
+          body.noButtonLabel !== "" &&
+          v === undefined
+        ) {
+          return res.status(400).json({
+            ok: false,
+            error:
+              "noButtonLabel must be a short string (max 48 characters) or empty to clear",
+          });
+        }
+        updates.noButtonLabel = v;
+      }
+
       if (Object.keys(updates).length === 0) {
         return res.status(400).json({
           ok: false,
-          error: "Send at least one of: imageUrl, yesMeans, noMeans",
+          error:
+            "Send at least one of: imageUrl, yesMeans, noMeans, yesButtonLabel, noButtonLabel",
         });
       }
 
@@ -724,7 +820,11 @@ spaceRouter.post("/vote", writeLimiter, async (req: Request, res: Response) => {
 
     return res.json({
       ok: true,
-      question: result.question,
+      question: questionWithMyVotePayload(
+        result.question,
+        vote,
+        result.canChangeVote
+      ),
       voteStatus: result.status,
       previousVote: result.previousVote,
       canChangeVote: result.canChangeVote,
@@ -943,9 +1043,12 @@ spaceRouter.use("/admin", writeLimiter, adminRoutes);
 
 app.use("/spaces/:slug", spaceRouter);
 
-app.get("/questions", async (_req: Request, res: Response) => {
+app.get("/questions", async (req: Request, res: Response) => {
   const sid = await openSpaceId();
-  res.json(await dataStore.getQuestions(sid));
+  const deviceId = readDeviceIdForAttach(req);
+  let questions = await dataStore.getQuestions(sid);
+  questions = await attachDeviceVotesToQuestions(questions, sid, deviceId);
+  res.json(questions);
 });
 
 /** Legacy open-space route (same pattern as /questions) — /api/trending */
@@ -1073,7 +1176,11 @@ app.post("/vote", writeLimiter, async (req: Request, res: Response) => {
 
     return res.json({
       ok: true,
-      question: result.question,
+      question: questionWithMyVotePayload(
+        result.question,
+        vote,
+        result.canChangeVote
+      ),
       voteStatus: result.status,
       previousVote: result.previousVote,
       canChangeVote: result.canChangeVote,

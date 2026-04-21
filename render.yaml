@@ -1,3 +1,9 @@
+# Questions/spaces/votes need PostgreSQL. Set DATABASE_URL on this service to your
+# Render Postgres "Internal Database URL" (Dashboard → Postgres → Connect).
+# Without it, the API uses data/store.json on ephemeral disk — data is lost every deploy.
+#
+# Optional: add a Render Postgres from the dashboard, then:
+#   Environment → agentis → Add Environment Variable → DATABASE_URL → paste URL
 services:
   - type: web
     name: agentis
@@ -11,6 +17,8 @@ services:
         value: production
       - key: NODE_VERSION
         value: 20.11.1
+      - key: DATABASE_URL
+        sync: false
       - key: OPENAI_API_KEY
         sync: false
       - key: NEXT_PUBLIC_SITE_URL

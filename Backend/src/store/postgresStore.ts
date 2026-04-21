@@ -292,6 +292,12 @@ export class PostgresDataStore implements AgentisStore {
     await this.pool.query(`
       ALTER TABLE questions ADD COLUMN IF NOT EXISTS no_means TEXT;
     `);
+    await this.pool.query(`
+      ALTER TABLE questions ADD COLUMN IF NOT EXISTS yes_button_label TEXT;
+    `);
+    await this.pool.query(`
+      ALTER TABLE questions ADD COLUMN IF NOT EXISTS no_button_label TEXT;
+    `);
 
     await this.pool.query(`
       CREATE TABLE IF NOT EXISTS space_trending (
@@ -353,6 +359,14 @@ export class PostgresDataStore implements AgentisStore {
       noMeans:
         r.no_means != null && String(r.no_means).trim() !== ""
           ? String(r.no_means).trim()
+          : undefined,
+      yesButtonLabel:
+        r.yes_button_label != null && String(r.yes_button_label).trim() !== ""
+          ? String(r.yes_button_label).trim()
+          : undefined,
+      noButtonLabel:
+        r.no_button_label != null && String(r.no_button_label).trim() !== ""
+          ? String(r.no_button_label).trim()
           : undefined,
       createdAt: r.created_at ? Date.parse(r.created_at) : undefined,
     }));
@@ -516,8 +530,8 @@ export class PostgresDataStore implements AgentisStore {
     await this.ready;
     const result = await this.pool.query(
       `INSERT INTO questions
-        (title, description, arguments_for, arguments_against, cluster_id, source_submission_ids, space_id, image_url, yes_means, no_means)
-       VALUES ($1, $2, $3::jsonb, $4::jsonb, $5, $6::jsonb, $7, $8, $9, $10)
+        (title, description, arguments_for, arguments_against, cluster_id, source_submission_ids, space_id, image_url, yes_means, no_means, yes_button_label, no_button_label)
+       VALUES ($1, $2, $3::jsonb, $4::jsonb, $5, $6::jsonb, $7, $8, $9, $10, $11, $12)
        RETURNING *;`,
       [
         input.title,
@@ -530,6 +544,12 @@ export class PostgresDataStore implements AgentisStore {
         input.imageUrl && input.imageUrl.trim() ? input.imageUrl.trim() : null,
         input.yesMeans && input.yesMeans.trim() ? input.yesMeans.trim() : null,
         input.noMeans && input.noMeans.trim() ? input.noMeans.trim() : null,
+        input.yesButtonLabel && input.yesButtonLabel.trim()
+          ? input.yesButtonLabel.trim().slice(0, 48)
+          : null,
+        input.noButtonLabel && input.noButtonLabel.trim()
+          ? input.noButtonLabel.trim().slice(0, 48)
+          : null,
       ]
     );
     return (await this.rowsToQuestions(result.rows))[0];
@@ -595,7 +615,9 @@ export class PostgresDataStore implements AgentisStore {
         source_submission_ids=$9::jsonb,
         image_url=$11,
         yes_means=$12,
-        no_means=$13
+        no_means=$13,
+        yes_button_label=$14,
+        no_button_label=$15
       WHERE id=$1 AND space_id=$10
       RETURNING *;`,
       [
@@ -615,6 +637,12 @@ export class PostgresDataStore implements AgentisStore {
           : null,
         merged.noMeans != null && String(merged.noMeans).trim() !== ""
           ? String(merged.noMeans).trim()
+          : null,
+        merged.yesButtonLabel != null && String(merged.yesButtonLabel).trim() !== ""
+          ? String(merged.yesButtonLabel).trim().slice(0, 48)
+          : null,
+        merged.noButtonLabel != null && String(merged.noButtonLabel).trim() !== ""
+          ? String(merged.noButtonLabel).trim().slice(0, 48)
           : null,
       ]
     );
@@ -827,6 +855,26 @@ export class PostgresDataStore implements AgentisStore {
     } finally {
       client.release();
     }
+  }
+
+  async getDeviceVoteStatesForSpace(
+    spaceId: number,
+    deviceId: string
+  ): Promise<Map<number, { vote: "yes" | "no"; changeUsed: boolean }>> {
+    await this.ready;
+    const result = await this.pool.query(
+      `SELECT question_id, vote, vote_change_used FROM device_votes
+       WHERE space_id=$1 AND device_id=$2;`,
+      [spaceId, deviceId]
+    );
+    const m = new Map<number, { vote: "yes" | "no"; changeUsed: boolean }>();
+    for (const r of result.rows) {
+      m.set(Number(r.question_id), {
+        vote: r.vote === "no" ? "no" : "yes",
+        changeUsed: !!r.vote_change_used,
+      });
+    }
+    return m;
   }
 
   async listVoteFlipEvents(spaceId: number): Promise<VoteFlipEvent[]> {

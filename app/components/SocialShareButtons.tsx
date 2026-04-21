@@ -1,7 +1,11 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { SITE_URL, canonicalPublicUrl } from "../../lib/siteUrl";
+import {
+  SITE_URL,
+  canonicalPublicUrl,
+  resolveShareUrl,
+} from "../../lib/siteUrl";
 
 type Props = {
   /** Shared title (e.g. page title) */
@@ -34,9 +38,10 @@ export function SocialShareButtons({
     setMounted(true);
   }, []);
 
-  const shareUrl = canonicalPublicUrl(
-    url ?? (mounted ? window.location.href : SITE_URL)
-  );
+  const shareUrl =
+    typeof window !== "undefined" && mounted
+      ? resolveShareUrl(window.location.href, url)
+      : canonicalPublicUrl(url ?? SITE_URL);
 
   const body = `${text}\n${shareUrl}`.trim();
   const waHref = `https://wa.me/?text=${encodeURIComponent(body)}`;

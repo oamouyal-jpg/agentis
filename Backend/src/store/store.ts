@@ -33,7 +33,15 @@ export type Question = {
   yesMeans?: string;
   /** Host-editable: plain language for what a No vote means. */
   noMeans?: string;
+  /** Short label for the Yes vote button (e.g. Interested). Max 48 chars. */
+  yesButtonLabel?: string;
+  /** Short label for the No vote button (e.g. Not interested). Max 48 chars. */
+  noButtonLabel?: string;
   createdAt?: number;
+  /** Set on API responses when `X-Space-Device` matches a stored vote (not persisted on the row). */
+  myVote?: "yes" | "no";
+  /** True when this device has used its one allowed Yes↔No change (API only). */
+  myVoteChangeExhausted?: boolean;
 };
 
 export type VoteDemographics = {
@@ -189,6 +197,12 @@ export type AgentisStore = {
     vote: "yes" | "no",
     demographics?: VoteDemographics
   ): Promise<SubmitVoteResult>;
+
+  /** Current vote + change flag per question for one device (for GET /questions). */
+  getDeviceVoteStatesForSpace(
+    spaceId: number,
+    deviceId: string
+  ): Promise<Map<number, { vote: "yes" | "no"; changeUsed: boolean }>>;
 
   listVoteFlipEvents(spaceId: number): Promise<VoteFlipEvent[]>;
 
@@ -685,6 +699,8 @@ class FileDataStore implements AgentisStore {
       imageUrl: input.imageUrl,
       yesMeans: input.yesMeans,
       noMeans: input.noMeans,
+      yesButtonLabel: input.yesButtonLabel,
+      noButtonLabel: input.noButtonLabel,
       createdAt: input.createdAt ?? Date.now(),
     };
 
@@ -925,6 +941,22 @@ class FileDataStore implements AgentisStore {
       : { ok: false, reason: "not_found" };
   }
 
+  async getDeviceVoteStatesForSpace(
+    spaceId: number,
+    deviceId: string
+  ): Promise<Map<number, { vote: "yes" | "no"; changeUsed: boolean }>> {
+    const m = new Map<number, { vote: "yes" | "no"; changeUsed: boolean }>();
+    for (const d of this.deviceVotes) {
+      if (d.spaceId === spaceId && d.deviceId === deviceId) {
+        m.set(d.questionId, {
+          vote: d.vote,
+          changeUsed: !!d.voteChangeUsed,
+        });
+      }
+    }
+    return m;
+  }
+
   async listVoteFlipEvents(spaceId: number): Promise<VoteFlipEvent[]> {
     return this.voteFlipEvents
       .filter((e) => e.spaceId === spaceId)
@@ -1162,6 +1194,18 @@ class FileDataStore implements AgentisStore {
   }
 }
 
-export const dataStore: AgentisStore = process.env.DATABASE_URL
-  ? new PostgresDataStore(process.env.DATABASE_URL)
+const usePostgres = Boolean(
+  process.env.DATABASE_URL && String(process.env.DATABASE_URL).trim()
+);
+
+if (!usePostgres && process.env.NODE_ENV === "production") {
+  console.warn(
+    "[Agentis] DATABASE_URL is not set. Using the file store at data/store.json — " +
+      "this filesystem is cleared on each deploy (Render, Fly, etc.), so questions and " +
+      "spaces disappear after redeploy. Add a managed PostgreSQL instance and set DATABASE_URL."
+  );
+}
+
+export const dataStore: AgentisStore = usePostgres
+  ? new PostgresDataStore(process.env.DATABASE_URL as string)
   : new FileDataStore();
